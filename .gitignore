@@ -1,0 +1,25 @@
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+
+# Local secrets and machine-specific settings
+api_keys.json
+settings.json
+
+# Generated reports/logs
+outputs/
+*.log
+processes-*.csv
+
+# Editor/OS noise
+.vscode/
+.idea/
+Thumbs.db
+Desktop.ini
+SECURITY.md
+PRIVACY.md
+DISCLAIMER.md
+CONTRIBUTING.md
+THIRD_PARTY_NOTICES.md

@@ -1,0 +1,75 @@
+{
+  "Tools": {
+    "OOSU10": {
+      "DisplayName": "O&O ShutUp10++",
+      "LocalPath": "tools\\OOSU10.exe",
+      "Url": "https://dl5.oo-software.com/files/ooshutup10/OOSU10.exe"
+    },
+    "ChocolateyInstall": {
+      "DisplayName": "Chocolatey offline installer script",
+      "LocalPath": "tools\\chocolatey\\install.ps1",
+      "Url": "https://community.chocolatey.org/install.ps1"
+    },
+    "PowerShellProfileInstall": {
+      "DisplayName": "CTT PowerShell profile setup",
+      "LocalPath": "tools\\powershell-profile\\setup.ps1",
+      "Url": "https://github.com/ChrisTitusTech/powershell-profile/raw/main/setup.ps1"
+    },
+    "MSERT": {
+      "DisplayName": "Microsoft Safety Scanner",
+      "LocalPath": "tools\\MSERT.exe",
+      "Url": "https://go.microsoft.com/fwlink/?LinkId=212732"
+    }
+  },
+  "Downloads": {
+    "Windows": {
+      "DisplayName": "Microsoft Windows ISO downloads",
+      "Url": "https://www.microsoft.com/software-download/windows11"
+    },
+    "WindowsServer": {
+      "DisplayName": "Microsoft Windows Server evaluations",
+      "Url": "https://www.microsoft.com/evalcenter/evaluate-windows-server-2025"
+    },
+    "OfficeDeploymentTool": {
+      "DisplayName": "Microsoft Office Deployment Tool",
+      "Url": "https://www.microsoft.com/download/details.aspx?id=49117"
+    }
+  },
+  "Iso": {
+    "Editions": [
+      { "Name": "Multi", "EditionID": "", "Family": "Client", "Description": "Keep all editions available in the source image." },
+      { "Name": "Home", "EditionID": "Core", "Family": "Client" },
+      { "Name": "Home N", "EditionID": "CoreN", "Family": "Client" },
+      { "Name": "Pro", "EditionID": "Professional", "Family": "Client" },
+      { "Name": "Pro N", "EditionID": "ProfessionalN", "Family": "Client" },
+      { "Name": "Pro Education", "EditionID": "ProfessionalEducation", "Family": "Client" },
+      { "Name": "Pro Workstations", "EditionID": "ProfessionalWorkstation", "Family": "Client" },
+      { "Name": "Enterprise", "EditionID": "Enterprise", "Family": "Client" },
+      { "Name": "Enterprise N", "EditionID": "EnterpriseN", "Family": "Client" },
+      { "Name": "Education", "EditionID": "Education", "Family": "Client" },
+      { "Name": "Education N", "EditionID": "EducationN", "Family": "Client" },
+      { "Name": "IoT Enterprise", "EditionID": "IoTEnterprise", "Family": "Client" },
+      { "Name": "Server Standard", "EditionID": "ServerStandard", "Family": "Server" },
+      { "Name": "Server Standard Core", "EditionID": "ServerStandardCore", "Family": "Server" },
+      { "Name": "Server Datacenter", "EditionID": "ServerDatacenter", "Family": "Server" },
+      { "Name": "Server Datacenter Core", "EditionID": "ServerDatacenterCore", "Family": "Server" },
+      { "Name": "Server Datacenter Azure Edition", "EditionID": "ServerAzureStackHCICor", "Family": "Server" }
+    ],
+    "Languages": [
+      { "Name": "Default", "Tag": "" },
+      { "Name": "English (United States)", "Tag": "en-US" },
+      { "Name": "English (India)", "Tag": "en-IN" },
+      { "Name": "Hindi", "Tag": "hi-IN" },
+      { "Name": "Punjabi", "Tag": "pa-IN" },
+      { "Name": "Spanish", "Tag": "es-ES" },
+      { "Name": "French", "Tag": "fr-FR" },
+      { "Name": "German", "Tag": "de-DE" },
+      { "Name": "Japanese", "Tag": "ja-JP" }
+    ],
+    "Channels": [
+      { "Name": "Retail", "Channel": "Retail", "VL": 0 },
+      { "Name": "Volume", "Channel": "Volume", "VL": 1 },
+      { "Name": "OEM", "Channel": "OEM", "VL": 0 }
+    ]
+  }
+}
