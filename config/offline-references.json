@@ -1,24 +1,8 @@
 {
   "Tools": {
-    "OOSU10": {
-      "DisplayName": "O&O ShutUp10++",
-      "LocalPath": "tools\\OOSU10.exe",
-      "Url": "https://dl5.oo-software.com/files/ooshutup10/OOSU10.exe"
-    },
-    "ChocolateyInstall": {
-      "DisplayName": "Chocolatey offline installer script",
-      "LocalPath": "tools\\chocolatey\\install.ps1",
-      "Url": "https://community.chocolatey.org/install.ps1"
-    },
     "PowerShellProfileInstall": {
-      "DisplayName": "CTT PowerShell profile setup",
-      "LocalPath": "tools\\powershell-profile\\setup.ps1",
-      "Url": "https://github.com/ChrisTitusTech/powershell-profile/raw/main/setup.ps1"
-    },
-    "MSERT": {
-      "DisplayName": "Microsoft Safety Scanner",
-      "LocalPath": "tools\\MSERT.exe",
-      "Url": "https://go.microsoft.com/fwlink/?LinkId=212732"
+      "DisplayName": "Bundled PowerShell profile setup",
+      "LocalPath": "tools\\powershell-profile\\setup.ps1"
     }
   },
   "Downloads": {

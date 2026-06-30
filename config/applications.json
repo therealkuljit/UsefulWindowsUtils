@@ -2086,5 +2086,257 @@
                     "winget":  "AntibodySoftware.WizTree",
                     "source":  "",
                     "foss":  false
-                }
+                },
+    "figma":  {
+                  "category":  "AI & Design",
+                  "choco":  "na",
+                  "content":  "Figma",
+                  "description":  "Collaborative interface design, prototyping, whiteboarding, and product design tool.",
+                  "winget":  "Figma.Figma",
+                  "source":  "",
+                  "foss":  false
+              },
+    "canva":  {
+                  "category":  "AI & Design",
+                  "choco":  "na",
+                  "content":  "Canva",
+                  "description":  "Friendly design tool for social media assets, presentations, posters, and brand content.",
+                  "winget":  "Canva.Canva",
+                  "source":  "",
+                  "foss":  false
+              },
+    "notion":  {
+                   "category":  "Business & Productivity",
+                   "choco":  "notion",
+                   "content":  "Notion",
+                   "description":  "Workspace for notes, docs, project planning, databases, and team knowledge.",
+                   "winget":  "Notion.Notion",
+                   "source":  "",
+                   "foss":  false
+               },
+    "miro":  {
+                 "category":  "Business & Productivity",
+                 "choco":  "na",
+                 "content":  "Miro",
+                 "description":  "Collaborative whiteboard for workshops, planning, diagrams, and product work.",
+                 "winget":  "Miro.Miro",
+                 "source":  "",
+                 "foss":  false
+             },
+    "ollama":  {
+                   "category":  "AI Tools",
+                   "choco":  "na",
+                   "content":  "Ollama",
+                   "description":  "Run local large language models from a simple desktop and command-line workflow.",
+                   "winget":  "Ollama.Ollama",
+                   "source":  "",
+                   "foss":  true
+               },
+    "powerbi":  {
+                    "category":  "Business & Finance",
+                    "choco":  "powerbi",
+                    "content":  "Microsoft Power BI Desktop",
+                    "description":  "Business intelligence and reporting tool for dashboards, data models, and analytics.",
+                    "winget":  "Microsoft.PowerBI",
+                    "source":  "",
+                    "foss":  false
+                },
+    "openbbterminal":  {
+                           "category":  "Business & Finance",
+                           "choco":  "na",
+                           "content":  "OpenBB Terminal",
+                           "description":  "Open-source investment research terminal for market, equity, crypto, and macro analysis.",
+                           "winget":  "OpenBB-finance.OpenBBTerminal",
+                           "source":  "",
+                           "foss":  true
+                       },
+    "tradingview":  {
+                        "category":  "Business & Finance",
+                        "choco":  "na",
+                        "content":  "TradingView",
+                        "description":  "Charting and market analysis desktop app for stocks, crypto, forex, and futures.",
+                        "winget":  "TradingView.TradingViewDesktop",
+                        "source":  "",
+                        "foss":  false
+                    },
+    "gnucash":  {
+                    "category":  "Business & Finance",
+                    "choco":  "gnucash",
+                    "content":  "GnuCash",
+                    "description":  "Personal and small-business accounting software with double-entry bookkeeping.",
+                    "winget":  "GnuCash.GnuCash",
+                    "source":  "",
+                    "foss":  true
+                },
+    "homebank":  {
+                    "category":  "Business & Finance",
+                    "choco":  "homebank",
+                    "content":  "HomeBank",
+                    "description":  "Personal finance manager for tracking accounts, budgets, spending, and reports.",
+                    "winget":  "HomeBank.HomeBank",
+                    "source":  "",
+                    "foss":  true
+                },
+    "fenderstudio":  {
+                         "category":  "Creative Tools",
+                         "choco":  "na",
+                         "content":  "Fender Studio",
+                         "description":  "Fender's desktop music creation and guitar-focused recording app from Microsoft Store.",
+                         "winget":  "9NZKLSCRWRSQ",
+                         "source":  "msstore",
+                         "foss":  false
+                     },
+    "burpsuitecommunity":  {
+                               "category":  "Security",
+                               "choco":  "burp-suite-free-edition",
+                               "content":  "Burp Suite Community",
+                               "description":  "Web application security testing proxy for manual testing and learning.",
+                               "winget":  "PortSwigger.BurpSuite.Community",
+                               "source":  "",
+                               "foss":  false
+                           },
+    "configuredefender":  {
+                              "category":  "Security",
+                              "choco":  "na",
+                              "content":  "ConfigureDefender",
+                              "description":  "Small utility for viewing and adjusting Microsoft Defender security settings.",
+                              "winget":  "AndyFul.ConfigureDefender",
+                              "source":  "",
+                              "foss":  true
+                          },
+    "defenderui":  {
+                       "category":  "Security",
+                       "choco":  "na",
+                       "content":  "DefenderUI",
+                       "description":  "User-friendly interface for Microsoft Defender configuration and hardening.",
+                       "winget":  "VoodooSoft.DefenderUI",
+                       "source":  "",
+                       "foss":  false
+                   },
+    "virustotaluploader":  {
+                               "category":  "Security",
+                               "choco":  "na",
+                               "content":  "VirusTotal Uploader",
+                               "description":  "Upload suspicious files to VirusTotal directly from Windows.",
+                               "winget":  "VirusTotal.VirusTotalUploader",
+                               "source":  "",
+                               "foss":  false
+                           },
+    "sysmon":  {
+                   "category":  "SOC & Detection",
+                   "choco":  "sysmon",
+                   "content":  "Sysmon",
+                   "description":  "Sysinternals system monitor for detailed Windows process, network, and file telemetry.",
+                   "winget":  "Microsoft.Sysinternals.Sysmon",
+                   "source":  "",
+                   "foss":  false
+               },
+    "pstools":  {
+                    "category":  "SOC & Detection",
+                    "choco":  "pstools",
+                    "content":  "PsTools Suite",
+                    "description":  "Sysinternals command-line tools for process, service, and remote administration triage.",
+                    "winget":  "Microsoft.Sysinternals.PsTools",
+                    "source":  "",
+                    "foss":  false
+                },
+    "osquery":  {
+                    "category":  "SOC & Detection",
+                    "choco":  "osquery",
+                    "content":  "osquery",
+                    "description":  "Endpoint visibility tool that exposes operating system data through SQL queries.",
+                    "winget":  "osquery.osquery",
+                    "source":  "",
+                    "foss":  true
+                },
+    "velociraptor":  {
+                         "category":  "SOC & Detection",
+                         "choco":  "na",
+                         "content":  "Velociraptor",
+                         "description":  "Endpoint collection, hunting, and incident response tool for security teams.",
+                         "winget":  "Velocidex.Velociraptor",
+                         "source":  "",
+                         "foss":  true
+                     },
+    "wazuhagent":  {
+                       "category":  "SOC & Detection",
+                       "choco":  "wazuh-agent",
+                       "content":  "Wazuh Agent",
+                       "description":  "Endpoint security agent for Wazuh monitoring, detection, inventory, and compliance.",
+                       "winget":  "Wazuh.WazuhAgent",
+                       "source":  "",
+                       "foss":  true
+                   },
+    "winlogbeat":  {
+                       "category":  "SOC & Detection",
+                       "choco":  "winlogbeat",
+                       "content":  "Winlogbeat",
+                       "description":  "Elastic Beat for forwarding Windows Event Logs into a SIEM or log pipeline.",
+                       "winget":  "Elastic.Winlogbeat",
+                       "source":  "",
+                       "foss":  true
+                   },
+    "filebeat":  {
+                     "category":  "SOC & Detection",
+                     "choco":  "filebeat",
+                     "content":  "Filebeat",
+                     "description":  "Elastic Beat for forwarding log files from endpoints and servers.",
+                     "winget":  "Elastic.Filebeat",
+                     "source":  "",
+                     "foss":  true
+                 },
+    "githubdesktop":  {
+                          "category":  "Development",
+                          "choco":  "github-desktop",
+                          "content":  "GitHub Desktop",
+                          "description":  "Graphical Git client for GitHub repositories, commits, branches, and pull requests.",
+                          "winget":  "GitHub.GitHubDesktop",
+                          "source":  "",
+                          "foss":  false
+                      },
+    "termius":  {
+                    "category":  "IT & DevOps",
+                    "choco":  "na",
+                    "content":  "Termius",
+                    "description":  "Modern SSH client for managing servers, keys, and terminal sessions.",
+                    "winget":  "Termius.Termius",
+                    "source":  "",
+                    "foss":  false
+                },
+    "cloudflared":  {
+                        "category":  "IT & DevOps",
+                        "choco":  "cloudflared",
+                        "content":  "cloudflared",
+                        "description":  "Cloudflare Tunnel client for exposing local services and managing secure tunnels.",
+                        "winget":  "Cloudflare.cloudflared",
+                        "source":  "",
+                        "foss":  true
+                    },
+    "azurecli":  {
+                     "category":  "IT & DevOps",
+                     "choco":  "azure-cli",
+                     "content":  "Microsoft Azure CLI",
+                     "description":  "Command-line tool for managing Azure resources and automation workflows.",
+                     "winget":  "Microsoft.AzureCLI",
+                     "source":  "",
+                     "foss":  true
+                 },
+    "kubectl":  {
+                    "category":  "IT & DevOps",
+                    "choco":  "kubernetes-cli",
+                    "content":  "Kubernetes CLI",
+                    "description":  "kubectl command-line tool for inspecting and managing Kubernetes clusters.",
+                    "winget":  "Kubernetes.kubectl",
+                    "source":  "",
+                    "foss":  true
+                },
+    "helm":  {
+                 "category":  "IT & DevOps",
+                 "choco":  "kubernetes-helm",
+                 "content":  "Helm",
+                 "description":  "Kubernetes package manager for installing and managing application charts.",
+                 "winget":  "Helm.Helm",
+                 "source":  "",
+                 "foss":  true
+             }
 }

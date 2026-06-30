@@ -80,6 +80,15 @@
                                                       }
                                                   ]
                                  },
+    "WPFTweaksClearStartPins":  {
+                                    "Content":  "Start Menu Pinned Apps - Clear",
+                                    "Description":  "Backs up the current Windows 11 start2.bin file, then replaces it with a bundled blank layout so no apps are pinned to Start.",
+                                    "category":  "Essential Tweaks",
+                                    "panel":  "1",
+                                    "InvokeScript":  [
+                                                         "Invoke-WinUtilClearStartPins"
+                                                     ]
+                                },
     "WPFTweaksDisableStoreSearch":  {
                                         "Content":  "Microsoft Store Recommended Search Results - Disable",
                                         "Description":  "Will not display recommended Microsoft Store apps when searching for apps in the Start menu.",

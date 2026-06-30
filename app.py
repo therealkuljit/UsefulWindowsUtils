@@ -36,6 +36,8 @@ CFG = ROOT / "config"
 SETTINGS_PATH = ROOT / "settings.json"
 API_KEYS_PATH = ROOT / "api_keys.json"
 APP_FONT_PATH = ROOT / "assets" / "fonts" / "rostex.regular.ttf"
+START2_PATH = ROOT / "assets" / "start" / "start2.bin"
+PROFILE_SETUP_PATH = ROOT / "tools" / "powershell-profile" / "setup.ps1"
 APP_NAME = "UsefulWindowsUtils Python"
 APP_TITLE_FONT = "Rostex"
 API_KEY_NAMES = ("vt_key", "tf_key", "otx_key", "pd_key", "ha_key")
@@ -48,6 +50,18 @@ C2_KEY = {
     "Pulsedive": "pd_key",
     "Hybrid Analysis": "ha_key",
 }
+BUNDLED_FILES = (
+    CFG / "applications.json",
+    CFG / "dns.json",
+    CFG / "feature.json",
+    CFG / "offline-references.json",
+    CFG / "presets.json",
+    CFG / "tweaks.json",
+    CFG / "win11debloat-apps.json",
+    APP_FONT_PATH,
+    START2_PATH,
+    PROFILE_SETUP_PATH,
+)
 
 TRANSLATIONS = {
     "Spanish": {
@@ -140,6 +154,19 @@ THEMES = {
         "log": "#000000",
         "log_text": "#e5e7eb",
     },
+    "Cyberpunk": {
+        "bg": "#15131d",
+        "panel": "#201d2b",
+        "glass": "#2d293a",
+        "text": "#f6f2ff",
+        "muted": "#b7aec9",
+        "line": "#4b405f",
+        "accent": "#00d4ff",
+        "green": "#6ee787",
+        "red": "#ff5c8a",
+        "log": "#0b0a12",
+        "log_text": "#d8f7ff",
+    },
 }
 COLORS = THEMES["Light"].copy()
 
@@ -165,6 +192,25 @@ def norm_pkg(value):
 
 def run_capture(cmd):
     return subprocess.run(cmd, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, errors="replace")
+
+
+def bundled_path(value, default="outputs"):
+    path = Path(value or default)
+    return path if path.is_absolute() else ROOT / path
+
+
+def is_inside_root(path):
+    try:
+        Path(path).resolve().relative_to(ROOT)
+        return True
+    except ValueError:
+        return False
+
+
+def check_bundled_files():
+    missing = [str(path.relative_to(ROOT)) for path in BUNDLED_FILES if not path.exists()]
+    if missing:
+        raise FileNotFoundError("Missing bundled files: " + ", ".join(missing))
 
 
 class ScrollFrame(ttk.Frame):
@@ -241,6 +287,7 @@ class Tooltip:
 
 class App:
     def __init__(self):
+        check_bundled_files()
         self.root = Tk()
         self.root.withdraw()  # hide window while building UI
         self.root.title(f"{APP_NAME} - Made by Kuljit Singh")
@@ -281,10 +328,12 @@ class App:
         self.apps = self.load_apps()
         self.tweaks = self.load_tweaks()
         self.tweak_presets = self.load_tweak_presets()
+        self.debloat_apps = self.load_debloat_apps()
         self.features = self.load_features()
         self.dns = self.load_dns()
         self.app_vars = {}
         self.tweak_vars = {}
+        self.debloat_vars = {}
         self.feature_vars = {}
         self.installed_rows = {}
         self.toggle_widgets = []
@@ -313,7 +362,7 @@ class App:
             "c2_sources": {name: True for name in C2_SOURCES},
             "c2_limits": {name: 100 for name in C2_SOURCES},
             "c2_days": "7",
-            "c2_output_dir": str(ROOT / "outputs"),
+            "c2_output_dir": "outputs",
         }
         if SETTINGS_PATH.exists():
             try:
@@ -321,6 +370,11 @@ class App:
                 defaults.update({k: v for k, v in data.items() if k not in API_KEY_NAMES})
             except Exception:
                 pass
+        c2_dir = bundled_path(defaults.get("c2_output_dir"))
+        if not is_inside_root(c2_dir) or not c2_dir.exists():
+            defaults["c2_output_dir"] = "outputs"
+        if defaults.get("theme") not in THEMES:
+            defaults["theme"] = "Light"
         return defaults
 
     def load_api_keys(self):
@@ -378,9 +432,13 @@ class App:
         raw = load_json("tweaks.json")
         out = []
         for key, item in raw.items():
+            if key == "WPFTweaksDeBloat":
+                continue
             if item.get("Type") == "Combobox":
                 continue
             cat = {"Essential Tweaks": "Essential", "z__Advanced Tweaks - CAUTION": "Advanced", "Customize Preferences": "Preferences"}.get(item.get("category"), item.get("category", "Other"))
+            if cat == "Advanced":
+                continue
             out.append({
                 "key": key,
                 "name": item.get("Content", key),
@@ -398,9 +456,30 @@ class App:
     def load_tweak_presets(self):
         try:
             data = load_json("presets.json")
-            return {k: [str(x) for x in v] for k, v in data.items() if isinstance(v, list)}
+            return {k: [str(x) for x in v] for k, v in data.items() if isinstance(v, list) and k.lower() != "advanced"}
         except Exception:
             return {}
+
+    def load_debloat_apps(self):
+        try:
+            raw = load_json("win11debloat-apps.json")
+        except Exception:
+            return []
+        apps = raw.get("Apps", []) if isinstance(raw, dict) else []
+        out = []
+        for item in apps:
+            appid = str(item.get("AppId", "")).strip()
+            if not appid:
+                continue
+            out.append({
+                "name": item.get("FriendlyName", appid),
+                "appid": appid,
+                "desc": item.get("Description", ""),
+                "selected": bool(item.get("SelectedByDefault")),
+                "recommendation": item.get("Recommendation", ""),
+                "method": item.get("RemovalMethod", "Appx"),
+            })
+        return sorted(out, key=lambda x: (x["recommendation"], x["name"].lower()))
 
     def load_features(self):
         raw = load_json("feature.json")
@@ -500,6 +579,8 @@ class App:
         body.pack(fill=BOTH, expand=True, padx=18, pady=(0, 10))
         self.nav = ttk.Frame(body, padding=8)
         self.nav.pack(side=LEFT, fill="y", padx=(0, 10))
+        self.nav.configure(width=220)
+        self.nav.pack_propagate(False)
         self.tabs = ttk.Notebook(body, style="Rail.TNotebook")
         self.tabs.pack(side=LEFT, fill=BOTH, expand=True)
         self._apps_tab()
@@ -507,11 +588,9 @@ class App:
         self._tweaks_tab()
         self._features_tab()
         self._security_tab()
-        self._vt_tab()
         self._path_tab()
         self._iso_tab()
         self._file_mover_tab()
-        self._c2_tab()
         self._settings_tab()
         self._about_tab()
         self._build_nav()
@@ -576,12 +655,24 @@ class App:
         for w in self.nav.winfo_children():
             w.destroy()
         icons = ["📱", "📦", "🛠", "✨", "🛡️", "🔬", "🗂", "💿", "↔", "📡", "⚙", "ℹ️"]
+        icon_map = {
+            "Apps": icons[0],
+            "Installed": icons[1],
+            "Windows Tweaks": icons[2],
+            "Features": icons[3],
+            "Security": icons[4],
+            "PATH": icons[6],
+            "ISO": icons[7],
+            "File Mover": icons[8],
+            "Settings": icons[10],
+            "About": icons[11],
+        }
         for i in range(self.tabs.index("end")):
             label = self.tabs.tab(i, "text")
             # attempt to translate the base label if we have it
             trans_label = self._(label)
-            text = f"  {icons[i]}   {trans_label}"
-            ttk.Button(self.nav, text=text, style="Nav.TButton", command=lambda idx=i: self.tabs.select(idx)).pack(fill="x", pady=2)
+            text = f"  {icon_map.get(label, '')}   {trans_label}"
+            ttk.Button(self.nav, text=text, style="Nav.TButton", width=24, command=lambda idx=i: self.tabs.select(idx)).pack(fill="x", pady=2)
 
     def _logbox(self, parent, height=8):
         box = Text(parent, height=height, bg=COLORS["log"], fg=COLORS["log_text"], insertbackground=COLORS["log_text"], relief="flat", padx=10, pady=8)
@@ -591,7 +682,7 @@ class App:
 
     def _log_tools(self, parent, box):
         row = ttk.Frame(parent, style="Panel.TFrame")
-        row.pack(fill="x", pady=(4, 0))
+        row.pack(fill="x", pady=(0, 4), before=box)
         ttk.Button(row, text="Export Log", command=lambda: self.export_log(box)).pack(side=RIGHT)
 
     def export_log(self, box):
@@ -641,7 +732,7 @@ class App:
         for row in getattr(self, "c2_rows", []):
             hay = " ".join(str(x) for x in row).lower()
             if term in hay:
-                records.append(("C2 Intelligence", "C2: " + str(row[0]), str(row[7])[:180] if len(row) > 7 else ""))
+                records.append(("Security", "C2: " + str(row[0]), str(row[7])[:180] if len(row) > 7 else ""))
         for line in self.app_log[-300:]:
             if term in line.lower():
                 records.append(("Settings", "Log: " + line[:120], "Application log"))
@@ -763,16 +854,24 @@ class App:
         
         top = ttk.Frame(tab, style="Panel.TFrame")
         top.pack(fill="x", pady=(0, 12), padx=10, ipady=6)
-        ttk.Button(top, text="☰ Show Installed", command=self.refresh_installed).pack(side=LEFT, padx=(12, 4))
+        ttk.Button(top, text="Refresh", command=self.refresh_installed).pack(side=LEFT, padx=(12, 4))
         
         actions = ttk.Frame(top)
         actions.pack(side=RIGHT, padx=12)
         ttk.Button(actions, text="↻ Upgrade All", command=lambda: self.thread("Upgrade all", self.run_cmd, ["winget", "upgrade", "--all", "--silent", "--accept-source-agreements", "--accept-package-agreements"], self.installed_log)).pack(side=LEFT, padx=4)
         ttk.Button(actions, text="↻ Upgrade Selected", style="Accent.TButton", command=self.upgrade_installed).pack(side=LEFT, padx=4)
         ttk.Button(actions, text="⌫ Uninstall Selected", command=self.uninstall_installed).pack(side=LEFT, padx=4)
-        
-        vsplit = ttk.PanedWindow(tab, orient="vertical")
-        vsplit.pack(fill=BOTH, expand=True, padx=10)
+
+        installed_book = ttk.Notebook(tab)
+        installed_book.pack(fill=BOTH, expand=True, padx=10)
+        apps_tab = ttk.Frame(installed_book, padding=8)
+        debloat_tab = ttk.Frame(installed_book, padding=8)
+        installed_book.add(apps_tab, text="Installed Apps")
+        installed_book.add(debloat_tab, text="Debloater")
+        self._debloater_section(debloat_tab)
+
+        vsplit = ttk.PanedWindow(apps_tab, orient="vertical")
+        vsplit.pack(fill=BOTH, expand=True)
         tree_frame = ttk.Frame(vsplit)
         vsplit.add(tree_frame, weight=3)
         self.installed_tree = ttk.Treeview(tree_frame, columns=("name", "id", "version"), show="headings")
@@ -786,6 +885,45 @@ class App:
         self.installed_log = self._logbox(log_pane)
         self.installed_log.pack(fill=BOTH, expand=True)
         self._log_tools(log_pane, self.installed_log)
+        self.root.after(300, self.refresh_installed)
+
+    def _debloater_section(self, tab):
+        top = ttk.Frame(tab, style="Panel.TFrame")
+        top.pack(fill="x", pady=(0, 12), ipady=6)
+        ttk.Label(top, text="Win11Debloat + CTT Debloat", font=("Segoe UI", 12, "bold")).pack(side=LEFT, padx=12)
+        ttk.Button(top, text="Select Recommended", command=self.select_recommended_debloat).pack(side=RIGHT, padx=(4, 12))
+        ttk.Button(top, text="Clear", command=self.clear_debloat_apps).pack(side=RIGHT, padx=4)
+        ttk.Button(top, text="Run CTT Debloat", command=self.run_ctt_debloat).pack(side=RIGHT, padx=4)
+        ttk.Button(top, text="Remove Selected", style="Accent.TButton", command=self.remove_selected_debloat).pack(side=RIGHT, padx=4)
+
+        vsplit = ttk.PanedWindow(tab, orient="vertical")
+        vsplit.pack(fill=BOTH, expand=True)
+        list_frame = ttk.Frame(vsplit)
+        vsplit.add(list_frame, weight=3)
+        sf = ScrollFrame(list_frame)
+        sf.pack(fill=BOTH, expand=True)
+        rec_order = {"safe": 0, "optional": 1, "limited": 2, "advanced": 3, "unsafe": 4, "": 99}
+        recommendations = sorted({str(a.get("recommendation", "")).lower() for a in self.debloat_apps}, key=lambda r: (rec_order.get(r, 50), r))
+        for rec in recommendations:
+            apps = [a for a in self.debloat_apps if str(a.get("recommendation", "")).lower() == rec]
+            if not apps:
+                continue
+            title = rec.title() if rec else "Other"
+            cat_frame = ttk.Frame(sf.inner, style="Panel.TFrame")
+            cat_frame.pack(fill="x", pady=(0, 10), padx=4)
+            ttk.Label(cat_frame, text=title, font=("Segoe UI", 13, "bold"), foreground=COLORS["accent"]).pack(anchor="w", pady=(12, 8), padx=12)
+            for app in apps:
+                var = self.debloat_vars[app["appid"]] = BooleanVar(value=app["selected"])
+                text = f"{app['name']}  [{app['method']}: {app['appid']}]"
+                cb = ttk.Checkbutton(cat_frame, text=text, variable=var, command=lambda a=app: self.status.configure(text=a["desc"][:160] or a["name"]))
+                cb.pack(anchor="w", padx=16, pady=3)
+                Tooltip(cb, app["desc"] or app["appid"])
+
+        log_pane = ttk.Frame(vsplit)
+        vsplit.add(log_pane, weight=1)
+        self.debloat_log = self._logbox(log_pane)
+        self.debloat_log.pack(fill=BOTH, expand=True)
+        self._log_tools(log_pane, self.debloat_log)
 
     def _tweaks_tab(self):
         tab = ttk.Frame(self.tabs, padding=12)
@@ -841,7 +979,7 @@ class App:
             ttk.Label(cat_frame, text=cat, font=("Segoe UI", 13, "bold"), foreground=COLORS["accent"]).pack(anchor="w", pady=(12, 8), padx=12)
             
             for tw in [x for x in self.tweaks if x["category"] == cat and x["toggle"]]:
-                var = self.tweak_vars[tw["key"]] = BooleanVar(value=tw["default"])
+                var = self.tweak_vars[tw["key"]] = BooleanVar(value=self.tweak_enabled(tw))
                 row = ttk.Frame(cat_frame)
                 row.pack(fill="x", pady=4, padx=16)
                 
@@ -922,6 +1060,18 @@ class App:
     def _security_tab(self):
         tab = ttk.Frame(self.tabs, padding=12)
         self.tabs.add(tab, text="Security")
+        section_row = ttk.Frame(tab, style="Panel.TFrame")
+        section_row.pack(fill="x", pady=(0, 12), ipady=6)
+        self.security_sections = {}
+        for name in ("System", "VirusTotal", "C2 Collector"):
+            section = ttk.Frame(tab, padding=12)
+            self.security_sections[name] = section
+            ttk.Button(section_row, text=name, command=lambda n=name: self.show_security_section(n)).pack(side=LEFT, padx=(12 if name == "System" else 4, 4))
+
+        system_tab = self.security_sections["System"]
+        vt_tab = self.security_sections["VirusTotal"]
+        c2_tab = self.security_sections["C2 Collector"]
+        tab = system_tab
         
         # Windows Defender Inspired Hero Banner
         banner = ttk.Frame(tab)
@@ -949,10 +1099,10 @@ class App:
         ttk.Button(b3, text="Full Scan", width=18, command=lambda: self.run_ps("Start-MpScan -ScanType FullScan", self.security_log)).pack(side=LEFT)
         ttk.Label(b3, text="Comprehensive system-wide scan.", foreground=COLORS["muted"]).pack(side=LEFT, padx=10)
 
-        # Advanced Tools Card
+        # Diagnostics Card
         adv = ttk.Frame(cards, style="Panel.TFrame")
         adv.pack(side=LEFT, fill="both", expand=True, padx=(10, 0))
-        ttk.Label(adv, text="Advanced Diagnostics", font=("Segoe UI", 12, "bold")).pack(anchor="w", padx=12, pady=(12, 4))
+        ttk.Label(adv, text="Diagnostics", font=("Segoe UI", 12, "bold")).pack(anchor="w", padx=12, pady=(12, 4))
         b4 = ttk.Frame(adv); b4.pack(fill="x", padx=12, pady=4)
         ttk.Button(b4, text="Hash File", width=22, command=self.hash_file).pack(side=LEFT)
         ttk.Button(b4, text="Hash Folder CSV", width=22, command=self.hash_folder).pack(side=LEFT, padx=8)
@@ -963,10 +1113,19 @@ class App:
         self.security_log = self._logbox(tab, 12)
         self.security_log.pack(fill=BOTH, expand=True, pady=(20, 0))
         self._log_tools(tab, self.security_log)
+        self._vt_tab(vt_tab)
+        self._c2_tab(c2_tab)
+        self.show_security_section("System")
 
-    def _vt_tab(self):
-        tab = ttk.Frame(self.tabs, padding=12)
-        self.tabs.add(tab, text="VirusTotal")
+    def show_security_section(self, name):
+        for section in self.security_sections.values():
+            section.pack_forget()
+        self.security_sections[name].pack(fill=BOTH, expand=True)
+
+    def _vt_tab(self, tab=None):
+        if tab is None:
+            tab = ttk.Frame(self.tabs, padding=12)
+            self.tabs.add(tab, text="VirusTotal")
         
         # VT Website Style Centered Hero
         hero = ttk.Frame(tab)
@@ -1011,26 +1170,14 @@ class App:
         
         left = ttk.Frame(panes, style="Panel.TFrame")
         panes.add(left, weight=1)
-        ttk.Label(left, text="Common Paths", font=("Segoe UI", 12, "bold")).pack(anchor="w", padx=12, pady=(12, 8))
-        
-        paths = [
-            ("Python", r"%LOCALAPPDATA%\Programs\Python\Python313"),
-            ("Python Scripts", r"%LOCALAPPDATA%\Programs\Python\Python313\Scripts"),
-            ("Node.js", r"C:\Program Files\nodejs"),
-            ("npm", r"%APPDATA%\npm"),
-            ("Git", r"C:\Program Files\Git\cmd"),
-            ("FFmpeg", r"C:\Program Files\ffmpeg\bin"),
-            ("Chocolatey", r"C:\ProgramData\chocolatey\bin"),
-        ]
+        ttk.Label(left, text="Current PATH Entries", font=("Segoe UI", 12, "bold")).pack(anchor="w", padx=12, pady=(12, 8))
         self.path_vars = []
-        for name, path in paths:
-            var = BooleanVar()
-            self.path_vars.append((var, os.path.expandvars(path)))
-            ttk.Checkbutton(left, text=f"{name}   ({os.path.expandvars(path)})", variable=var).pack(anchor="w", padx=16, pady=4)
+        self.path_entries = ScrollFrame(left)
+        self.path_entries.pack(fill=BOTH, expand=True, padx=12, pady=(0, 12))
             
         right = ttk.Frame(panes, style="Panel.TFrame")
         panes.add(right, weight=1)
-        ttk.Label(right, text="Custom Path", font=("Segoe UI", 12, "bold")).pack(anchor="w", padx=12, pady=(12, 8))
+        ttk.Label(right, text="PATH Controls", font=("Segoe UI", 12, "bold")).pack(anchor="w", padx=12, pady=(12, 8))
         
         custom = ttk.Frame(right)
         custom.pack(fill="x", padx=16, pady=4)
@@ -1042,15 +1189,52 @@ class App:
         scope.pack(fill="x", padx=16, pady=(16, 4))
         self.path_scope = StringVar(value="User")
         ttk.Label(scope, text="Target Scope:").pack(side=LEFT)
-        ttk.Combobox(scope, textvariable=self.path_scope, values=["User", "System"], state="readonly", width=12).pack(side=LEFT, padx=8)
+        scope_box = ttk.Combobox(scope, textvariable=self.path_scope, values=["User", "System"], state="readonly", width=12)
+        scope_box.pack(side=LEFT, padx=8)
+        scope_box.bind("<<ComboboxSelected>>", lambda _e: self.load_path_entries())
         
-        ttk.Button(right, text="Add Selected To PATH", style="Accent.TButton", command=self.add_paths).pack(anchor="w", padx=16, pady=(20, 12))
+        ttk.Label(right, text="Checked entries remain in PATH. Uncheck an entry and save to remove it.", foreground=COLORS["muted"], wraplength=360).pack(anchor="w", padx=16, pady=(12, 4))
+        ttk.Button(right, text="Save PATH", style="Accent.TButton", command=self.add_paths).pack(anchor="w", padx=16, pady=(20, 4))
+        ttk.Button(right, text="Reload", command=self.load_path_entries).pack(anchor="w", padx=16, pady=(4, 12))
         
         log_pane = ttk.Frame(vsplit)
         vsplit.add(log_pane, weight=1)
         self.path_log = self._logbox(log_pane)
         self.path_log.pack(fill=BOTH, expand=True)
         self._log_tools(log_pane, self.path_log)
+        self.load_path_entries()
+
+    def path_registry_target(self, scope):
+        if scope == "System":
+            return winreg.HKEY_LOCAL_MACHINE, r"SYSTEM\CurrentControlSet\Control\Session Manager\Environment"
+        return winreg.HKEY_CURRENT_USER, r"Environment"
+
+    def get_path_entries(self, scope):
+        if not winreg:
+            return []
+        root, subkey = self.path_registry_target(scope)
+        try:
+            with winreg.OpenKey(root, subkey) as key:
+                value, _typ = winreg.QueryValueEx(key, "Path")
+        except OSError:
+            value = ""
+        return [x.strip() for x in str(value).split(";") if x.strip()]
+
+    def set_path_entries(self, scope, entries):
+        if not winreg:
+            return
+        root, subkey = self.path_registry_target(scope)
+        with winreg.CreateKeyEx(root, subkey, 0, winreg.KEY_SET_VALUE) as key:
+            winreg.SetValueEx(key, "Path", 0, winreg.REG_EXPAND_SZ, ";".join(entries))
+
+    def load_path_entries(self):
+        for child in self.path_entries.inner.winfo_children():
+            child.destroy()
+        self.path_vars = []
+        for path in self.get_path_entries(self.path_scope.get()):
+            var = BooleanVar(value=True)
+            self.path_vars.append((var, path))
+            ttk.Checkbutton(self.path_entries.inner, text=path, variable=var).pack(anchor="w", padx=4, pady=2)
 
     def _iso_tab(self):
         tab = ttk.Frame(self.tabs, padding=12)
@@ -1062,8 +1246,12 @@ class App:
         self.iso_lang = StringVar(value="Default")
         self.iso_channel = StringVar(value="Retail")
         
-        cards = ttk.Frame(tab)
-        cards.pack(fill="x", padx=10)
+        vsplit = ttk.PanedWindow(tab, orient="vertical")
+        vsplit.pack(fill=BOTH, expand=True, padx=10)
+        controls = ttk.Frame(vsplit)
+        vsplit.add(controls, weight=2)
+        cards = ttk.Frame(controls)
+        cards.pack(fill="both", expand=True)
         
         # Step 1
         s1 = ttk.Frame(cards, style="Panel.TFrame")
@@ -1109,8 +1297,12 @@ class App:
         self.tabs.add(tab, text="File Mover")
         self._hero_banner(tab, "↔", "Bulk File Mover", "Move files in bulk by providing a text file of names.")
         
-        cards = ttk.Frame(tab)
-        cards.pack(fill="x", padx=10)
+        vsplit = ttk.PanedWindow(tab, orient="vertical")
+        vsplit.pack(fill=BOTH, expand=True, padx=10)
+        controls = ttk.Frame(vsplit)
+        vsplit.add(controls, weight=2)
+        cards = ttk.Frame(controls)
+        cards.pack(fill="both", expand=True)
         
         inputs = ttk.Frame(cards, style="Panel.TFrame")
         inputs.pack(fill="x", pady=(0, 10), ipady=4)
@@ -1124,6 +1316,25 @@ class App:
             ttk.Entry(row, textvariable=var).pack(side=LEFT, fill="x", expand=True)
             cmd = (lambda v=var, l=label: v.set((filedialog.askopenfilename() if "File" in l else filedialog.askdirectory()) or v.get()))
             ttk.Button(row, text="Browse", command=cmd).pack(side=LEFT, padx=4)
+
+        names = ttk.Frame(cards, style="Panel.TFrame")
+        names.pack(fill="x", pady=(0, 10), ipady=4)
+        ttk.Label(names, text="File Matches", font=("Segoe UI", 12, "bold")).pack(anchor="w", padx=12, pady=(12, 4))
+        mode_row = ttk.Frame(names)
+        mode_row.pack(fill="x", padx=16, pady=(0, 6))
+        self.fm_input_mode = StringVar(value="names")
+        for value, label in [("names", "File names"), ("text", "Text file with names"), ("extensions", "Extensions")]:
+            ttk.Radiobutton(mode_row, text=label, value=value, variable=self.fm_input_mode, command=self.fm_toggle_input_mode).pack(side=LEFT, padx=(0, 12))
+        self.fm_manual_frame = ttk.Frame(names)
+        self.fm_manual_frame.pack(fill="x", padx=16, pady=(0, 8))
+        self.fm_entries_label = ttk.Label(self.fm_manual_frame, text="One filename per line.", foreground=COLORS["muted"])
+        self.fm_entries_label.pack(anchor="w", pady=(0, 4))
+        self.fm_names = Text(self.fm_manual_frame, height=6, relief="flat")
+        self.fm_names.pack(fill="x")
+        self.fm_txt_frame = ttk.Frame(names)
+        self.fm_txt_preview = StringVar(value="")
+        ttk.Button(self.fm_txt_frame, text="Preview TXT", command=self.fm_preview_txt).pack(anchor="w", pady=(0, 4))
+        ttk.Label(self.fm_txt_frame, textvariable=self.fm_txt_preview, foreground=COLORS["muted"], justify="left").pack(anchor="w")
             
         settings = ttk.Frame(cards, style="Panel.TFrame")
         settings.pack(fill="x", pady=(0, 10), ipady=4)
@@ -1131,21 +1342,22 @@ class App:
         
         opts = ttk.Frame(settings)
         opts.pack(fill="x", padx=16, pady=4)
-        self.fm_match_mode = StringVar(value="Filenames")
-        ttk.Label(opts, text="Match Mode:").pack(side=LEFT, padx=(0, 4))
-        ttk.Combobox(opts, textvariable=self.fm_match_mode, values=["Filenames", "Extensions", "Filenames + Extensions"], state="readonly", width=22).pack(side=LEFT, padx=(0, 10))
         self.fm_overwrite, self.fm_case, self.fm_partial, self.fm_dry = BooleanVar(), BooleanVar(), BooleanVar(), BooleanVar()
         for var, text in [(self.fm_overwrite, "Overwrite"), (self.fm_case, "Case sensitive"), (self.fm_partial, "Partial match"), (self.fm_dry, "Dry run")]:
             ttk.Checkbutton(opts, text=text, variable=var).pack(side=LEFT, padx=6)
+        ttk.Button(opts, text="Clear Files", command=self.fm_clear_files).pack(side=RIGHT, padx=4)
         ttk.Button(opts, text="Move Files", style="Accent.TButton", command=self.file_mover_run).pack(side=RIGHT, padx=4)
         
-        self.fm_log = self._logbox(tab, 12)
-        self.fm_log.pack(fill=BOTH, expand=True, padx=10, pady=(8, 0))
-        self._log_tools(tab, self.fm_log)
+        log_pane = ttk.Frame(vsplit)
+        vsplit.add(log_pane, weight=1)
+        self.fm_log = self._logbox(log_pane, 10)
+        self.fm_log.pack(fill=BOTH, expand=True)
+        self._log_tools(log_pane, self.fm_log)
 
-    def _c2_tab(self):
-        tab = ttk.Frame(self.tabs, padding=12)
-        self.tabs.add(tab, text="C2 Intelligence")
+    def _c2_tab(self, tab=None):
+        if tab is None:
+            tab = ttk.Frame(self.tabs, padding=12)
+            self.tabs.add(tab, text="C2 Intelligence")
         self._hero_banner(tab, "📡", "Threat Intelligence Dashboard", "Collect, filter, and enrich active Command & Control indicators.")
         
         cards = ttk.Frame(tab)
@@ -1178,7 +1390,7 @@ class App:
 
         folder_row = ttk.Frame(cfg)
         folder_row.pack(fill="x", padx=16, pady=(4, 8))
-        self.c2_output_folder = StringVar(value=self.settings.get("c2_output_dir", str(ROOT / "outputs")))
+        self.c2_output_folder = StringVar(value=self.settings.get("c2_output_dir", "outputs"))
         ttk.Label(folder_row, text="Report Folder:").pack(side=LEFT)
         ttk.Entry(folder_row, textvariable=self.c2_output_folder).pack(side=LEFT, fill="x", expand=True, padx=4)
         ttk.Button(folder_row, text="Browse", command=self.pick_c2_output_folder).pack(side=LEFT)
@@ -1340,6 +1552,7 @@ class App:
         if not force and self.settings.get("theme") == theme:
             return
         self.settings["theme"] = theme
+        old_colors = COLORS.copy()
         set_colors(theme)
         
         try:
@@ -1356,7 +1569,7 @@ class App:
         bg = "#000000" if theme == "AMOLED" else COLORS["bg"]
         panel = "#000000" if theme == "AMOLED" else COLORS["panel"]
         
-        # Safely override backgrounds without touching foregrounds
+        # Safely override backgrounds; _style and _repaint_ttk_foregrounds handle text colors.
         style.configure("TFrame", background=bg)
         style.configure("Panel.TFrame", background=panel)
         style.configure("TLabel", background=bg)
@@ -1367,11 +1580,32 @@ class App:
         self._style()
         self._recursive_panel_style(self.root)
         self._repaint_widget_backgrounds(self.root)
+        self._repaint_ttk_foregrounds(self.root, old_colors)
 
 
         # Update only Text widgets (tk, not ttk) — sv_ttk handles everything else
         self._repaint_text_widgets(self.root)
         save_json(SETTINGS_PATH, self.settings)
+
+    def _repaint_ttk_foregrounds(self, widget, old_colors):
+        replacements = {
+            old_colors.get("text"): COLORS["text"],
+            old_colors.get("muted"): COLORS["muted"],
+            old_colors.get("accent"): COLORS["accent"],
+            old_colors.get("green"): COLORS["green"],
+            old_colors.get("red"): COLORS["red"],
+            "#3b82f6": COLORS["accent"],
+            "#0f4b99": COLORS["accent"],
+            "#d97706": COLORS["accent"],
+        }
+        try:
+            fg = widget.cget("foreground") if "foreground" in widget.keys() else ""
+            if fg in replacements:
+                widget.configure(foreground=replacements[fg])
+        except Exception:
+            pass
+        for child in widget.winfo_children():
+            self._repaint_ttk_foregrounds(child, old_colors)
 
     def _repaint_text_widgets(self, widget):
         if isinstance(widget, Text):
@@ -1491,6 +1725,7 @@ function Invoke-WinUtilRemoveEdge {{ $p = Resolve-Path "$Env:ProgramFiles (x86)\
 function Invoke-WinutilThemeChange {{ param([string]$theme='Auto') }}
 function Invoke-WinUtilInstallPSProfile {{ $p = Join-Path $env:UWU_PY_ROOT 'tools\powershell-profile\setup.ps1'; if(Test-Path $p){{ & $p }} else {{ throw "Profile setup not bundled: $p" }} }}
 function Invoke-WinUtilUninstallPSProfile {{ @($PROFILE.CurrentUserCurrentHost,$PROFILE.CurrentUserAllHosts) | ? {{ Test-Path $_ }} | % {{ Remove-Item $_ -Force }} }}
+function Invoke-WinUtilClearStartPins {{ $template = Join-Path $env:UWU_PY_ROOT 'assets\start\start2.bin'; if(-not (Test-Path -LiteralPath $template)){{ throw "Blank Start menu template not bundled: $template" }}; $dir = Join-Path $env:LOCALAPPDATA 'Packages\Microsoft.Windows.StartMenuExperienceHost_cw5n1h2txyewy\LocalState'; New-Item -ItemType Directory -Path $dir -Force | Out-Null; $target = Join-Path $dir 'start2.bin'; if(Test-Path -LiteralPath $target){{ $backup = Join-Path $dir ('start2.bin.' + (Get-Date -Format 'yyyyMMdd_HHmmss') + '.bak'); Copy-Item -LiteralPath $target -Destination $backup -Force; Write-Host "Backed up current Start menu pins to $backup" }}; Stop-Process -Name StartMenuExperienceHost -Force -ErrorAction SilentlyContinue; Copy-Item -LiteralPath $template -Destination $target -Force; Write-Host "Cleared Start menu pinned apps for current user. Sign out and back in if Windows does not refresh immediately." }}
 """
 
     def selected_apps(self):
@@ -1601,54 +1836,120 @@ function Invoke-WinUtilUninstallPSProfile {{ @($PROFILE.CurrentUserCurrentHost,$
         self.log(self.tweak_log, "Cleared selected tweaks.")
 
     def file_mover_names(self):
-        names = [x.strip() for x in self.fm_names.get("1.0", END).splitlines() if x.strip()]
+        if self.fm_input_mode.get() in {"names", "extensions"}:
+            return [x.strip() for x in self.fm_names.get("1.0", END).splitlines() if x.strip()]
         txt = self.fm_txt.get().strip()
-        if txt and Path(txt).exists():
-            names += [x.strip() for x in Path(txt).read_text(encoding="utf-8", errors="ignore").splitlines() if x.strip()]
-        return names
+        if not txt or not Path(txt).exists():
+            return []
+        return [x.strip() for x in Path(txt).read_text(encoding="utf-8", errors="ignore").splitlines() if x.strip()]
+
+    def fm_toggle_input_mode(self):
+        mode = self.fm_input_mode.get()
+        if mode == "text":
+            self.fm_manual_frame.pack_forget()
+            self.fm_txt_frame.pack(fill="x", padx=16, pady=(0, 8))
+            return
+        self.fm_txt_frame.pack_forget()
+        self.fm_manual_frame.pack(fill="x", padx=16, pady=(0, 8))
+        if mode == "extensions":
+            self.fm_entries_label.configure(text="One extension per line, with or without a dot.")
+        else:
+            self.fm_entries_label.configure(text="One filename per line.")
+
+    def fm_current_mode_label(self, mode=None):
+        mode = mode or self.fm_input_mode.get()
+        return {"names": "file names", "text": "text file with names", "extensions": "extensions"}.get(mode, "file names")
+
+    def fm_preview_txt(self):
+        txt = self.fm_txt.get().strip()
+        if not txt or not Path(txt).exists():
+            self.fm_txt_preview.set("File not found.")
+            return
+        lines = [x.strip() for x in Path(txt).read_text(encoding="utf-8", errors="ignore").splitlines() if x.strip()]
+        preview = "\n".join(lines[:5])
+        if len(lines) > 5:
+            preview += f"\n... (+{len(lines) - 5} more)"
+        self.fm_txt_preview.set(preview)
+
+    def fm_clear_files(self):
+        self.fm_names.delete("1.0", END)
+        self.fm_txt.set("")
+        self.fm_txt_preview.set("")
 
     def file_mover_run(self):
         src, dst, names = self.fm_src.get().strip(), self.fm_dst.get().strip(), self.file_mover_names()
         if not src or not dst or not names:
-            self.log(self.fm_log, "WARN choose source, destination, and at least one filename.")
+            self.log(self.fm_log, f"WARN choose source, destination, and at least one {self.fm_current_mode_label()} entry.")
             return
-        self.thread("File mover", self.file_mover_worker, src, dst, names, self.fm_match_mode.get(), self.fm_case.get(), self.fm_partial.get(), self.fm_overwrite.get(), self.fm_dry.get(), self.fm_log)
+        self.thread("File mover", self.file_mover_worker, src, dst, names, self.fm_input_mode.get(), self.fm_case.get(), self.fm_partial.get(), self.fm_overwrite.get(), self.fm_dry.get(), self.fm_log)
+
+    @staticmethod
+    def file_mover_resolve(names, source_dir, mode, case_sensitive, match_partial):
+        try:
+            all_files = os.listdir(source_dir)
+        except (FileNotFoundError, NotADirectoryError):
+            return [(name, None, "src_missing") for name in names]
+
+        if mode == "extensions":
+            wanted = {name.strip().lstrip(".") for name in names if name.strip()}
+            if not case_sensitive:
+                wanted = {name.lower() for name in wanted}
+            results, seen = [], set()
+            for filename in all_files:
+                suffix = Path(filename).suffix.lstrip(".")
+                suffix = suffix if case_sensitive else suffix.lower()
+                if suffix in wanted and filename not in seen:
+                    seen.add(filename)
+                    results.append((suffix, str(Path(source_dir) / filename), "found"))
+            found_exts = {Path(path).suffix.lstrip(".") if case_sensitive else Path(path).suffix.lstrip(".").lower() for _name, path, status in results if status == "found"}
+            for ext in wanted - found_exts:
+                results.append((ext, None, "not_found"))
+            return results
+
+        results = []
+        for name in names:
+            name = name.strip()
+            if not name:
+                continue
+            match = None
+            for filename in all_files:
+                hay, needle = (filename, name) if case_sensitive else (filename.lower(), name.lower())
+                hit = needle in hay if match_partial else hay == needle
+                if hit:
+                    match = filename
+                    break
+            results.append((name, str(Path(source_dir) / match), "found") if match else (name, None, "not_found"))
+        return results
 
     def file_mover_worker(self, src, dst, names, mode, case, partial, overwrite, dry, box):
-        files = os.listdir(src)
+        resolved = self.file_mover_resolve(names, src, mode, case, partial)
         moved = skipped = errors = 0
-        for name in names:
-            self.set_progress(moved + skipped + errors, max(1, len(names)))
-            needle = (name if case else name.lower()).lstrip(".") if "Extensions" in mode and "Filenames" not in mode else (name if case else name.lower())
-            matches = []
-            for f in list(files):
-                hay = f if case else f.lower()
-                ext_hit = Path(hay).suffix.lstrip(".") == needle.lstrip(".")
-                name_hit = (needle in hay) if partial else (hay == needle)
-                if ext_hit if mode == "Extensions" else (ext_hit or name_hit if mode == "Filenames + Extensions" else name_hit):
-                    matches.append(f)
-                    if mode != "Extensions":
-                        break
-            if not matches:
+        self.log(box, f"Mode: {self.fm_current_mode_label(mode)}")
+        self.log(box, f"Entries queued: {len(names)}")
+        if dry:
+            self.log(box, "Mode: dry run")
+        for i, (name, src_path, status) in enumerate(resolved, 1):
+            self.set_progress(i - 1, max(1, len(resolved)))
+            if status != "found":
                 skipped += 1
                 self.log(box, f"SKIP not found: {name}")
                 continue
-            for match in matches:
-                sp, dp = Path(src) / match, Path(dst) / match
-                if dp.exists() and not overwrite:
-                    skipped += 1
-                    self.log(box, f"SKIP exists: {dp}")
-                    continue
-                try:
-                    if not dry:
-                        Path(dst).mkdir(parents=True, exist_ok=True)
-                        shutil.move(str(sp), str(dp))
-                    moved += 1
-                    self.log(box, f"{'DRY' if dry else 'MOVED'}: {match}")
-                except OSError as e:
-                    errors += 1
-                    self.log(box, f"ERROR {match}: {e}")
-        self.set_progress(len(names), max(1, len(names)))
+            filename = Path(src_path).name
+            dest = Path(dst) / filename
+            if dest.exists() and not overwrite:
+                skipped += 1
+                self.log(box, f"SKIP exists: {filename}")
+                continue
+            try:
+                if not dry:
+                    Path(dst).mkdir(parents=True, exist_ok=True)
+                    shutil.move(src_path, dest)
+                moved += 1
+                self.log(box, f"{'DRY-RUN' if dry else 'MOVED'}: {filename}")
+            except OSError as e:
+                errors += 1
+                self.log(box, f"ERROR {filename}: {e}")
+        self.set_progress(len(resolved), max(1, len(resolved)))
         self.log(box, f"Done. moved={moved} skipped={skipped} errors={errors}")
 
     def install_portable_zip(self, app, box):
@@ -1725,7 +2026,7 @@ function Invoke-WinUtilUninstallPSProfile {{ @($PROFILE.CurrentUserCurrentHost,$
 
     def c2_output_dir(self):
         folder = self.c2_output_folder.get().strip() if hasattr(self, "c2_output_folder") else self.settings.get("c2_output_dir", "")
-        out = Path(folder) if folder else ROOT / "outputs"
+        out = bundled_path(folder)
         out.mkdir(parents=True, exist_ok=True)
         return out
 
@@ -1740,7 +2041,7 @@ function Invoke-WinUtilUninstallPSProfile {{ @($PROFILE.CurrentUserCurrentHost,$
         self.settings["c2_sources"] = {name: var.get() for name, var in self.c2_source_vars.items()}
         self.settings["c2_limits"] = {name: self.c2_limit(name) for name in C2_SOURCES}
         self.settings["c2_days"] = self.c2_days.get()
-        self.settings["c2_output_dir"] = self.c2_output_folder.get().strip() if hasattr(self, "c2_output_folder") else self.settings.get("c2_output_dir", str(ROOT / "outputs"))
+        self.settings["c2_output_dir"] = self.c2_output_folder.get().strip() if hasattr(self, "c2_output_folder") else self.settings.get("c2_output_dir", "outputs")
         save_json(SETTINGS_PATH, self.settings)
         self.log(self.c2_log, "C2 config saved.")
 
@@ -2233,6 +2534,89 @@ function Invoke-WinUtilUninstallPSProfile {{ @($PROFILE.CurrentUserCurrentHost,$
             self.set_progress(i, len(apps))
             self.log(box, f"Overall progress: {round(i * 100 / max(1, len(apps)))}%")
 
+    def selected_debloat_apps(self):
+        return [a for a in self.debloat_apps if self.debloat_vars.get(a["appid"]) and self.debloat_vars[a["appid"]].get()]
+
+    def select_recommended_debloat(self):
+        for app in self.debloat_apps:
+            if self.debloat_vars.get(app["appid"]):
+                self.debloat_vars[app["appid"]].set(app["selected"])
+
+    def clear_debloat_apps(self):
+        for var in self.debloat_vars.values():
+            var.set(False)
+
+    def remove_selected_debloat(self):
+        apps = self.selected_debloat_apps()
+        if not apps:
+            self.log(self.debloat_log, "WARN Select at least one debloat app first.")
+            return
+        if messagebox.askyesno("Debloat Windows", f"Remove {len(apps)} selected Windows apps?"):
+            self.thread("Debloat selected apps", self.debloat_remove_worker, apps, self.debloat_log)
+
+    def run_ctt_debloat(self):
+        if messagebox.askyesno("CTT Debloat", "Run the ChrisTitusTech unwanted pre-installed apps removal?"):
+            self.thread("CTT Debloat", self.ctt_debloat_worker, self.debloat_log)
+
+    @staticmethod
+    def ps_quote(value):
+        return "'" + str(value).replace("'", "''") + "'"
+
+    def appx_remove_script(self, appid):
+        app = self.ps_quote(appid)
+        return f"""
+$app = {app}
+$pattern = '*' + $app + '*'
+Write-Host "Removing Appx package: $app"
+$packages = @(Get-AppxPackage -Name $pattern -AllUsers -ErrorAction SilentlyContinue)
+foreach ($pkg in $packages) {{
+  Write-Host "Removing installed package $($pkg.PackageFullName)"
+  try {{
+    Remove-AppxPackage -Package $pkg.PackageFullName -AllUsers -ErrorAction Continue
+  }} catch {{
+    Remove-AppxPackage -Package $pkg.PackageFullName -ErrorAction Continue
+  }}
+}}
+$provisioned = @(Get-AppxProvisionedPackage -Online -ErrorAction SilentlyContinue | Where-Object {{ $_.DisplayName -like $pattern -or $_.PackageName -like $pattern }})
+foreach ($pkg in $provisioned) {{
+  Write-Host "Removing provisioned package $($pkg.PackageName)"
+  Remove-AppxProvisionedPackage -Online -PackageName $pkg.PackageName -ErrorAction Continue | Out-Host
+}}
+if (-not $packages -and -not $provisioned) {{
+  Write-Host "No matching Appx package found for $app"
+}}
+"""
+
+    def run_ps_block(self, script, box):
+        return self.run_cmd(["powershell.exe", "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", self.ps_prelude() + "\n" + script], box)
+
+    def debloat_remove_worker(self, apps, box):
+        for i, app in enumerate(apps, 1):
+            self.set_progress(i - 1, len(apps))
+            self.log(box, f"Debloat {i}/{len(apps)}: {app['name']} ({app['appid']})")
+            if str(app.get("method", "")).lower() == "winget":
+                cmd = ["winget", "uninstall", "--id", app["appid"], "--silent", "--accept-source-agreements", "--accept-package-agreements", "--disable-interactivity"]
+                code, output = self.run_cmd_collect(cmd, box)
+                if code and "user scope cannot be uninstalled when running with administrator privileges" in output.lower():
+                    self.run_unelevated(cmd, box)
+            else:
+                self.run_ps_block(self.appx_remove_script(app["appid"]), box)
+            self.set_progress(i, len(apps))
+
+    def ctt_debloat_worker(self, box):
+        tweak = load_json("tweaks.json").get("WPFTweaksDeBloat", {})
+        apps = [str(x).strip() for x in self.as_list(tweak.get("appx")) if str(x).strip()]
+        scripts = [str(x).strip() for x in self.as_list(tweak.get("InvokeScript")) if str(x).strip()]
+        self.log(box, f"Running CTT app debloat list ({len(apps)} Appx entries).")
+        for i, appid in enumerate(apps, 1):
+            self.set_progress(i - 1, max(1, len(apps) + len(scripts)))
+            self.log(box, f"CTT Appx {i}/{len(apps)}: {appid}")
+            self.run_ps_block(self.appx_remove_script(appid), box)
+        for script in scripts:
+            self.log(box, "Running CTT cleanup script.")
+            self.run_ps_block(script, box)
+        self.set_progress(len(apps) + len(scripts), max(1, len(apps) + len(scripts)))
+
     def refresh_installed(self):
         self.thread("Installed apps", self.refresh_installed_worker, self.installed_log)
 
@@ -2243,13 +2627,15 @@ function Invoke-WinUtilUninstallPSProfile {{ @($PROFILE.CurrentUserCurrentHost,$
         self.installed_tree.delete(*self.installed_tree.get_children())
         self.installed_rows.clear()
         seen = set()
-        for name, version in rows:
+        for row in rows:
+            name = row["name"]
+            version = row.get("version", "")
             key = name.lower()
             if key in seen:
                 continue
             seen.add(key)
             iid = self.installed_tree.insert("", END, values=(name, name, version))
-            self.installed_rows[iid] = {"name": name, "id": name}
+            self.installed_rows[iid] = row
         self.log(box, f"Loaded {len(self.installed_rows)} installed apps.")
 
     def installed_registry_rows(self):
@@ -2269,21 +2655,42 @@ function Invoke-WinUtilUninstallPSProfile {{ @($PROFILE.CurrentUserCurrentHost,$
                             with winreg.OpenKey(base, winreg.EnumKey(base, i)) as app:
                                 name, _ = winreg.QueryValueEx(app, "DisplayName")
                                 version = ""
+                                uninstall = ""
+                                quiet = ""
                                 try:
                                     version, _ = winreg.QueryValueEx(app, "DisplayVersion")
                                 except OSError:
                                     pass
+                                try:
+                                    uninstall, _ = winreg.QueryValueEx(app, "UninstallString")
+                                except OSError:
+                                    pass
+                                try:
+                                    quiet, _ = winreg.QueryValueEx(app, "QuietUninstallString")
+                                except OSError:
+                                    pass
                                 if name:
-                                    rows.append((str(name), str(version)))
+                                    rows.append({
+                                        "name": str(name),
+                                        "id": str(name),
+                                        "version": str(version),
+                                        "uninstall": str(uninstall),
+                                        "quiet": str(quiet),
+                                        "key": winreg.EnumKey(base, i),
+                                    })
                         except OSError:
                             pass
             except OSError:
                 pass
-        return sorted(rows, key=lambda x: x[0].lower())
+        return sorted(rows, key=lambda x: x["name"].lower())
 
     def selected_installed_id(self):
         sel = self.installed_tree.selection()
         return self.installed_rows.get(sel[0], {}).get("id") if sel else None
+
+    def selected_installed_row(self):
+        sel = self.installed_tree.selection()
+        return self.installed_rows.get(sel[0], {}) if sel else {}
 
     def upgrade_installed(self):
         pkg = self.selected_installed_id()
@@ -2293,20 +2700,67 @@ function Invoke-WinUtilUninstallPSProfile {{ @($PROFILE.CurrentUserCurrentHost,$
             self.log(self.installed_log, "WARN Select an installed app first.")
 
     def uninstall_installed(self):
-        pkg = self.selected_installed_id()
-        if pkg and messagebox.askyesno("Uninstall", f"Uninstall {pkg}?"):
-            self.thread("Uninstall selected", self.uninstall_installed_worker, pkg, self.installed_log)
-        elif not pkg:
+        row = self.selected_installed_row()
+        if row and messagebox.askyesno("Uninstall", f"Uninstall {row['name']}?"):
+            self.thread("Uninstall selected", self.uninstall_installed_worker, row, self.installed_log)
+        elif not row:
             self.log(self.installed_log, "WARN Select an installed app first.")
 
-    def uninstall_installed_worker(self, pkg, box):
-        cmd = ["winget", "uninstall", "--name", pkg, "--silent"]
+    def msi_uninstall_cmd(self, row):
+        text = " ".join([row.get("key", ""), row.get("uninstall", ""), row.get("quiet", "")])
+        match = re.search(r"\{[0-9A-Fa-f-]{36}\}", text)
+        return ["msiexec.exe", "/x", match.group(0), "/qn", "/norestart"] if match else None
+
+    @staticmethod
+    def normalize_uninstall_string(command):
+        return str(command or "").strip().replace(r"\"", '"')
+
+    @staticmethod
+    def split_windows_command(command):
+        command = App.normalize_uninstall_string(command)
+        if not command:
+            return []
+        argc = ctypes.c_int()
+        ctypes.windll.shell32.CommandLineToArgvW.argtypes = [ctypes.c_wchar_p, ctypes.POINTER(ctypes.c_int)]
+        ctypes.windll.shell32.CommandLineToArgvW.restype = ctypes.POINTER(ctypes.c_wchar_p)
+        ctypes.windll.kernel32.LocalFree.argtypes = [ctypes.c_void_p]
+        argv = ctypes.windll.shell32.CommandLineToArgvW(command, ctypes.byref(argc))
+        if not argv:
+            return []
+        try:
+            return [argv[i] for i in range(argc.value)]
+        finally:
+            ctypes.windll.kernel32.LocalFree(argv)
+
+    def run_uninstall_string(self, command, box):
+        command = self.normalize_uninstall_string(command)
+        if not command:
+            return 1, ""
+        parts = self.split_windows_command(command)
+        if parts and (Path(parts[0]).exists() or shutil.which(parts[0])):
+            return self.run_cmd_collect(parts, box)
+        return self.run_cmd_collect(["cmd.exe", "/s", "/c", command], box)
+
+    def uninstall_installed_worker(self, row, box):
+        name = row["name"]
+        for label, command in [("quiet registry uninstall", row.get("quiet", "")), ("MSI uninstall", self.msi_uninstall_cmd(row)), ("registry uninstall", row.get("uninstall", ""))]:
+            if not command:
+                continue
+            self.log(box, f"Trying {label}: {name}")
+            code, _output = self.run_cmd_collect(command, box) if isinstance(command, list) else self.run_uninstall_string(command, box)
+            if code == 0:
+                self.log(box, f"Uninstall command completed: {name}")
+                return
+
+        cmd = ["winget", "uninstall", "--name", name, "--silent"]
         code, output = self.run_cmd_collect(cmd, box)
         if code == 0:
             return
         if "cannot be uninstalled when running with administrator privileges" in output.lower():
             self.run_unelevated(cmd, box)
             self.log(box, "Started unelevated Winget uninstall for this user-scope package.")
+            return
+        self.log(box, f"WARN uninstall did not complete: {name}")
 
     @staticmethod
     def high_risk(tweak):
@@ -2389,6 +2843,37 @@ function Invoke-WinUtilUninstallPSProfile {{ @($PROFILE.CurrentUserCurrentHost,$
         start = {"Disable": "disabled", "Disabled": "disabled", "Manual": "demand", "Automatic": "auto"}.get(val, val.lower())
         if start:
             self.run_cmd(["sc.exe", "config", entry["Name"], "start=", start], box)
+
+    def registry_matches(self, entry):
+        if not winreg or not entry or "Value" not in entry:
+            return None
+        root, subkey = self.reg_root(entry["Path"])
+        try:
+            with winreg.OpenKey(root, subkey) as key:
+                current, _typ = winreg.QueryValueEx(key, entry["Name"])
+        except OSError:
+            current = None
+        _typ, wanted = self.reg_value(entry.get("Type"), entry.get("Value"))
+        return current == wanted
+
+    def service_matches(self, entry):
+        if not winreg or not entry or not entry.get("StartupType"):
+            return None
+        wanted = {"Disable": 4, "Disabled": 4, "Manual": 3, "Automatic": 2}.get(entry.get("StartupType"))
+        if wanted is None:
+            return None
+        try:
+            with winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, rf"SYSTEM\CurrentControlSet\Services\{entry['Name']}") as key:
+                current, _typ = winreg.QueryValueEx(key, "Start")
+        except OSError:
+            return None
+        return current == wanted
+
+    def tweak_enabled(self, tw):
+        checks = [self.registry_matches(entry) for entry in tw["registry"]]
+        checks += [self.service_matches(entry) for entry in tw["service"]]
+        checks = [x for x in checks if x is not None]
+        return all(checks) if checks else bool(tw["default"])
 
     def set_dns(self):
         name = self.dns_name.get()
@@ -2741,28 +3226,19 @@ function Invoke-WinUtilUninstallPSProfile {{ @($PROFILE.CurrentUserCurrentHost,$
         self.log(self.vt_log, f"Exported: {out}")
 
     def add_paths(self):
-        paths = [p for var, p in self.path_vars if var.get()]
-        if self.custom_path.get().strip():
-            paths.append(self.custom_path.get().strip())
-        if not paths:
-            return
-        if not winreg:
-            return
-        root = winreg.HKEY_LOCAL_MACHINE if self.path_scope.get() == "System" else winreg.HKEY_CURRENT_USER
-        subkey = r"SYSTEM\CurrentControlSet\Control\Session Manager\Environment" if self.path_scope.get() == "System" else "Environment"
-        with winreg.OpenKey(root, subkey, 0, winreg.KEY_READ | winreg.KEY_SET_VALUE) as key:
-            try:
-                current, _ = winreg.QueryValueEx(key, "Path")
-            except FileNotFoundError:
-                current = ""
-            parts = [p for p in current.split(";") if p]
-            low = {p.lower() for p in parts}
-            for p in paths:
-                if p.lower() not in low:
-                    parts.append(p)
-                    self.log(self.path_log, f"Added: {p}")
-            winreg.SetValueEx(key, "Path", 0, winreg.REG_EXPAND_SZ, ";".join(parts))
-        self.log(self.path_log, f"{self.path_scope.get()} PATH updated. Restart terminals/apps to see it.")
+        entries, seen = [], set()
+        for var, path in self.path_vars:
+            path = path.strip()
+            if var.get() and path and path.lower() not in seen:
+                entries.append(path)
+                seen.add(path.lower())
+        custom = self.custom_path.get().strip()
+        if custom and custom.lower() not in seen:
+            entries.append(custom)
+        self.set_path_entries(self.path_scope.get(), entries)
+        self.log(self.path_log, f"{self.path_scope.get()} PATH saved with {len(entries)} entries. Restart terminals/apps to see it.")
+        self.custom_path.set("")
+        self.load_path_entries()
 
     def pick_iso_source(self):
         p = filedialog.askopenfilename(filetypes=[("ISO", "*.iso"), ("All", "*.*")])
@@ -2991,7 +3467,7 @@ function Invoke-WinUtilUninstallPSProfile {{ @($PROFILE.CurrentUserCurrentHost,$
             self.settings["c2_sources"] = {name: var.get() for name, var in self.c2_source_vars.items()}
             self.settings["c2_limits"] = {name: self.c2_limit(name) for name in C2_SOURCES}
             self.settings["c2_days"] = self.c2_days.get()
-            self.settings["c2_output_dir"] = self.c2_output_folder.get().strip() if hasattr(self, "c2_output_folder") else self.settings.get("c2_output_dir", str(ROOT / "outputs"))
+            self.settings["c2_output_dir"] = self.c2_output_folder.get().strip() if hasattr(self, "c2_output_folder") else self.settings.get("c2_output_dir", "outputs")
         save_json(SETTINGS_PATH, self.settings)
         save_json(API_KEYS_PATH, self.api_keys)
         messagebox.showinfo(APP_NAME, "Settings saved.")
@@ -3001,20 +3477,41 @@ function Invoke-WinUtilUninstallPSProfile {{ @($PROFILE.CurrentUserCurrentHost,$
 
 
 def self_test():
+    check_bundled_files()
+    def contrast(fg, bg):
+        def lum(color):
+            h = color.lstrip("#")
+            vals = [int(h[i:i + 2], 16) / 255 for i in (0, 2, 4)]
+            vals = [v / 12.92 if v <= 0.04045 else ((v + 0.055) / 1.055) ** 2.4 for v in vals]
+            return 0.2126 * vals[0] + 0.7152 * vals[1] + 0.0722 * vals[2]
+        a, b = lum(fg), lum(bg)
+        return (max(a, b) + 0.05) / (min(a, b) + 0.05)
+    for theme in THEMES.values():
+        assert contrast(theme["text"], theme["panel"]) >= 4.5
+        assert contrast(theme["muted"], theme["panel"]) >= 4.5
+        assert contrast(theme["log_text"], theme["log"]) >= 4.5
     apps = App.__new__(App)
     apps.settings = {}
     apps.q = queue.Queue()
     apps.apps = App.load_apps(apps)
     apps.tweaks = App.load_tweaks(apps)
-    assert apps.apps and apps.tweaks
+    apps.debloat_apps = App.load_debloat_apps(apps)
+    assert apps.apps and apps.tweaks and apps.debloat_apps
     assert len({a["winget"].lower() for a in apps.apps if a["winget"]}) == len([a for a in apps.apps if a["winget"]])
     assert any(t["name"] == "Disk Cleanup - Run" for t in apps.tweaks)
+    assert any(t["name"] == "Start Menu Pinned Apps - Clear" for t in apps.tweaks)
+    assert all(t["category"] != "Advanced" for t in apps.tweaks)
+    assert not any(t["key"] == "WPFTweaksDeBloat" for t in apps.tweaks)
+    assert any(a["method"] == "WinGet" for a in apps.debloat_apps)
     with tempfile.TemporaryDirectory() as td:
         src, dst = Path(td) / "src", Path(td) / "dst"
         src.mkdir()
         (src / "sample.bin").write_text("x")
-        App.file_mover_worker(apps, str(src), str(dst), ["sample.bin"], "Filenames", False, False, False, True, None)
-        App.file_mover_worker(apps, str(src), str(dst), [".bin"], "Extensions", False, False, False, True, None)
+        (src / "other.txt").write_text("x")
+        assert App.file_mover_resolve(["sample.bin"], str(src), "names", False, False)[0][2] == "found"
+        assert App.file_mover_resolve(["sample"], str(src), "names", False, True)[0][2] == "found"
+        assert len([x for x in App.file_mover_resolve(["txt"], str(src), "extensions", False, False) if x[2] == "found"]) == 1
+        App.file_mover_worker(apps, str(src), str(dst), ["sample.bin"], "names", False, False, False, True, None)
         assert (src / "sample.bin").exists()
         iso = Path(td) / "iso"
         iso.mkdir()

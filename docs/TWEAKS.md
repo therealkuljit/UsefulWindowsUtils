@@ -6,7 +6,6 @@ Tweaks are loaded from `config/tweaks.json`. High-risk items are highlighted in 
 
 - Minimal
 - Standard
-- Advanced
 
 ## Essential Tweaks
 
@@ -28,30 +27,6 @@ Tweaks are loaded from `config/tweaks.json`. High-risk items are highlighted in 
 - Disk Cleanup - Run: Runs Disk Cleanup for drive C.
 - Temporary Files - Remove: Clears temp folders.
 - File Explorer Automatic Folder Discovery - Disable: Disables automatic folder type discovery.
-
-## Advanced Tweaks - Caution
-
-- Brave Browser - Debloat.
-- RDP Unsigned File Warnings - Disable.
-- Microsoft Edge - Debloat.
-- Microsoft Edge - Remove.
-- Date & Time - Set Time to UTC.
-- Microsoft OneDrive - Remove.
-- File Explorer Home and Gallery - Disable.
-- Visual Effects - Set to Best Performance.
-- Xbox & Gaming Components - Remove.
-- Disable Reserved Storage.
-- Storage Sense - Disable.
-- Windows AI - Disable And Remove.
-- Razer Software Auto-Install - Disable.
-- System Tray Notifications & Calendar - Disable.
-- Right-Click Menu Previous Layout - Enable.
-- IPv6 - Set IPv4 as Preferred.
-- Teredo - Disable.
-- IPv6 - Disable.
-- Background Apps - Disable.
-- Fullscreen Optimizations - Disable.
-- O&O ShutUp10++ - Run.
 
 ## Customize Preferences
 
@@ -84,4 +59,3 @@ Tweaks are loaded from `config/tweaks.json`. High-risk items are highlighted in 
 
 - Ultimate Performance Profile - Enable.
 - Ultimate Performance Profile - Disable.
-
