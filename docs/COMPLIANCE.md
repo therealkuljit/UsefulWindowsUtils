@@ -1,6 +1,6 @@
 # Compliance and Responsible Use
 
-UsefulWindowsUtils Python is an administrative and defensive-security utility. It is not a substitute for legal, compliance, incident-response, or security-engineering review.
+UsefulWindowsUtils is an administrative and defensive-security utility. It is not a substitute for legal, compliance, incident-response, or security-engineering review.
 
 ## User Responsibility
 
@@ -67,5 +67,4 @@ Users must comply with terms from:
 - AlienVault OTX.
 - Pulsedive.
 - Hybrid Analysis.
-- Any bundled font or asset license.
-
+- Any bundled asset license.

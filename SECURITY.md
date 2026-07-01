@@ -2,7 +2,7 @@
 
 ## Supported Versions
 
-This repository currently tracks the latest source version only.
+This repository currently supports the latest source version: `1.0.1`.
 
 ## Reporting Security Issues
 
@@ -37,4 +37,3 @@ If using file upload or malware-analysis workflows:
 - Do not execute unknown samples.
 - Do not upload files you are not allowed to share with third-party services.
 - Follow organization policy and applicable law.
-

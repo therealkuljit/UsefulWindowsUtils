@@ -1,6 +1,6 @@
 # Privacy
 
-UsefulWindowsUtils Python stores settings and API keys locally in JSON files.
+UsefulWindowsUtils stores settings and API keys locally in JSON files.
 
 ## Local Data
 
@@ -23,4 +23,3 @@ Do not submit confidential, personal, customer, proprietary, or regulated data u
 ## Network Behavior
 
 C2 enrichment should query provider APIs only. The app must not directly connect to collected C2 IPs, domains, or URLs.
-

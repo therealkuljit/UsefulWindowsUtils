@@ -1,6 +1,6 @@
 # Contributing
 
-Thanks for helping improve UsefulWindowsUtils Python.
+Thanks for helping improve UsefulWindowsUtils.
 
 ## Development Rules
 
@@ -30,4 +30,3 @@ Update README and relevant docs when changing:
 - Threat-intelligence collection/enrichment.
 - Export formats.
 - Security or privacy behavior.
-

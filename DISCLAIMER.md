@@ -1,6 +1,6 @@
 # Disclaimer
 
-UsefulWindowsUtils Python is provided for convenience, administration, and defensive security workflows.
+UsefulWindowsUtils is provided for convenience, administration, and defensive security workflows.
 
 Use this software at your own risk. The author and contributors are not responsible for:
 
@@ -18,4 +18,3 @@ Use this software at your own risk. The author and contributors are not responsi
 Many actions require administrator rights and can affect the whole system. Create backups and restore points before applying tweaks or system changes.
 
 Only analyze files, hashes, domains, URLs, IP addresses, and systems that you own or are authorized to investigate.
-

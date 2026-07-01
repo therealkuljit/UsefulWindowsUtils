@@ -36,7 +36,6 @@ CFG = ROOT / "config"
 DESIGN_REF = ROOT / "docs" / "design-references"
 SETTINGS_PATH = ROOT / "settings.json"
 API_KEYS_PATH = ROOT / "api_keys.json"
-APP_FONT_PATH = ROOT / "assets" / "fonts" / "rostex.regular.ttf"
 BRAND_LOGO_LIGHT_PATH = ROOT / "assets" / "brand" / "logo_light.png"
 BRAND_LOGO_DARK_PATH = ROOT / "assets" / "brand" / "logo_dark.png"
 BRAND_LOGO_AMOLED_PATH = ROOT / "assets" / "brand" / "logo_amoled.png"
@@ -47,8 +46,8 @@ BRAND_ICON_AMOLED_PATH = ROOT / "assets" / "brand" / "icon_amoled.png"
 BRAND_ICON_CYBERPUNK_PATH = ROOT / "assets" / "brand" / "icon_cyberpunk.png"
 START2_PATH = ROOT / "assets" / "start" / "start2.bin"
 PROFILE_SETUP_PATH = ROOT / "tools" / "powershell-profile" / "setup.ps1"
-APP_NAME = "UsefulWindowsUtils Python"
-APP_TITLE_FONT = "Rostex"
+APP_NAME = "UsefulWindowsUtils"
+APP_VERSION = "1.0.1"
 API_KEY_NAMES = ("vt_key", "tf_key", "otx_key", "pd_key", "ha_key")
 C2_SOURCES = ("ThreatFox", "URLhaus", "MalwareBazaar", "AlienVault OTX", "Pulsedive", "Hybrid Analysis")
 C2_KEY = {
@@ -82,7 +81,6 @@ BUNDLED_FILES = (
     CFG / "presets.json",
     CFG / "tweaks.json",
     CFG / "win11debloat-apps.json",
-    APP_FONT_PATH,
     BRAND_LOGO_LIGHT_PATH,
     BRAND_LOGO_DARK_PATH,
     BRAND_LOGO_AMOLED_PATH,
@@ -270,11 +268,10 @@ def check_bundled_files():
 
 class ThemedScrollbar(Canvas):
     def __init__(self, master, command):
-        super().__init__(master, width=12, highlightthickness=0, borderwidth=0, background=COLORS["glass"], cursor="hand2")
+        super().__init__(master, width=14, highlightthickness=0, borderwidth=0, background=COLORS["glass"], cursor="hand2")
         self.command = command
         self.first = 0.0
         self.last = 1.0
-        self.thumb = self.create_rectangle(3, 3, 9, 40, fill=COLORS["accent"], outline="")
         self.bind("<Button-1>", self._jump)
         self.bind("<B1-Motion>", self._jump)
         self.bind("<Configure>", lambda _e: self._draw())
@@ -284,12 +281,13 @@ class ThemedScrollbar(Canvas):
         self._draw()
 
     def _draw(self):
+        self.delete("all")
         h = max(1, self.winfo_height())
         top = max(3, int(self.first * h))
         bottom = min(h - 3, max(top + 24, int(self.last * h)))
         self.configure(background=COLORS["glass"])
-        self.itemconfigure(self.thumb, fill=COLORS["accent"])
-        self.coords(self.thumb, 3, top, 9, bottom)
+        _rounded_rect(self, 2, 2, 12, h - 2, 6, fill=COLORS["surface_subtle"], outline=COLORS["border"], width=1)
+        _rounded_rect(self, 4, top, 10, bottom, 4, fill=COLORS["primary"], outline=COLORS["primary_hover"], width=1)
 
     def _jump(self, event):
         h = max(1, self.winfo_height())
@@ -371,6 +369,9 @@ class Tooltip:
 
 
 _TTK_BUTTON = ttk.Button
+_TTK_CHECKBUTTON = ttk.Checkbutton
+_TTK_RADIOBUTTON = ttk.Radiobutton
+_TTK_PROGRESSBAR = ttk.Progressbar
 
 
 def _rounded_rect(canvas, x1, y1, x2, y2, r, **kwargs):
@@ -379,7 +380,7 @@ def _rounded_rect(canvas, x1, y1, x2, y2, r, **kwargs):
         x2, y2 - r, x2, y2, x2 - r, y2, x1 + r, y2,
         x1, y2, x1, y2 - r, x1, y1 + r, x1, y1,
     ]
-    return canvas.create_polygon(points, smooth=True, splinesteps=12, **kwargs)
+    return canvas.create_polygon(points, smooth=True, splinesteps=36, **kwargs)
 
 
 class RoundedButton(Canvas):
@@ -391,7 +392,7 @@ class RoundedButton(Canvas):
         self.hover = False
         self.down = False
         self.char_width = width
-        w = max(36, int(width) * 9 if width else max(72, len(self.text) * 8 + 36))
+        w = max(40, int(width) * 9 if width else max(82, len(self.text) * 8 + 44))
         super().__init__(master, width=w, height=36, highlightthickness=0, borderwidth=0, background=COLORS["background"], cursor="hand2", **{k: v for k, v in kwargs.items() if k in {"name"}})
         self.bind("<Configure>", lambda _e: self._draw())
         self.bind("<Enter>", self._enter)
@@ -439,9 +440,18 @@ class RoundedButton(Canvas):
         _rounded_rect(self, 1, 1, w - 1, h - 1, 9, fill=fill, outline=border, width=1)
         if self.style_name in ("Accent.TButton", "Primary.TButton") and COLORS.get("glow_cyan"):
             _rounded_rect(self, 2, 2, w - 2, h - 2, 9, fill="", outline=COLORS["primary"], width=1)
-        anchor = "w" if self.style_name == "Nav.TButton" else "center"
-        x = 14 if anchor == "w" else w // 2
-        self.create_text(x, h // 2, text=self.text, fill=fg, anchor=anchor, font=("Segoe UI Variable Text", 10, "bold"))
+        size = 10
+        while size > 8 and tkfont.Font(family="Segoe UI Variable Text", size=size, weight="bold").measure(self.text.replace("\t", "  ")) > w - 20:
+            size -= 1
+        font = ("Segoe UI Variable Text", size, "bold")
+        if self.style_name == "Nav.TButton" and "\t" in self.text:
+            icon, label = self.text.split("\t", 1)
+            self.create_text(18, h // 2, text=icon, fill=fg, anchor="center", font=("Segoe UI Symbol", size + 1))
+            self.create_text(44, h // 2, text=label, fill=fg, anchor="w", font=font)
+        else:
+            anchor = "w" if self.style_name == "Nav.TButton" else "center"
+            x = 44 if self.style_name == "Nav.TButton" else w // 2
+            self.create_text(x, h // 2, text=self.text, fill=fg, anchor=anchor, font=font, width=max(20, w - x - 8 if anchor == "w" else w - 18))
 
     def _enter(self, _event=None):
         self.hover = True
@@ -474,6 +484,8 @@ class RoundedButton(Canvas):
         for key in list(opts):
             if key == "text":
                 self.text = opts.pop(key) or ""
+                if not self.char_width:
+                    Canvas.configure(self, width=max(82, len(self.text) * 8 + 44))
             elif key == "command":
                 self.command = opts.pop(key)
             elif key == "style":
@@ -504,9 +516,223 @@ class RoundedButton(Canvas):
 ttk.Button = RoundedButton
 
 
+class ModernCheckbutton(Canvas):
+    def __init__(
+        self,
+        master,
+        text="",
+        variable=None,
+        command=None,
+        style=None,
+        state="normal",
+        onvalue=True,
+        offvalue=False,
+        **kwargs,
+    ):
+        self.text = text or ""
+        self.variable = variable or BooleanVar(master=master, value=False)
+        self.command = command
+        self.style_name = style or "TCheckbutton"
+        self.state = state
+        self.onvalue = onvalue
+        self.offvalue = offvalue
+        self.hover = False
+        self._trace_id = None
+        width = kwargs.pop("width", None)
+        super().__init__(
+            master,
+            width=self._desired_width(width),
+            height=self._desired_height(),
+            highlightthickness=0,
+            borderwidth=0,
+            background=self._bg(),
+            cursor="hand2",
+            **{k: v for k, v in kwargs.items() if k in {"name"}},
+        )
+        self.bind("<Button-1>", self._click)
+        self.bind("<Enter>", lambda _e: self._set_hover(True))
+        self.bind("<Leave>", lambda _e: self._set_hover(False))
+        self.bind("<Configure>", lambda _e: self._draw())
+        self._watch_variable()
+        self._draw()
+
+    def _desired_width(self, requested=None):
+        if requested:
+            return max(28, int(requested) * 8)
+        if not self.text:
+            return 28
+        return min(760, max(130, len(self.text) * 7 + 40))
+
+    def _desired_height(self):
+        width = max(80, self._desired_width() - 36)
+        lines = max(1, (len(self.text) * 7) // width + 1)
+        return max(28, min(64, lines * 16 + 10))
+
+    def _bg(self):
+        try:
+            parent_style = self.master.cget("style") if "style" in self.master.keys() else ""
+        except Exception:
+            parent_style = ""
+        if "Panel" in (self.style_name or "") or "Panel" in parent_style:
+            return COLORS["surface"]
+        return COLORS["background"]
+
+    def _checked(self):
+        try:
+            return self.variable.get() == self.onvalue
+        except Exception:
+            return bool(self.variable.get())
+
+    def _label_color(self):
+        if str(self.state) == "disabled":
+            return COLORS["disabled_text"]
+        if "Risk" in (self.style_name or ""):
+            return COLORS["danger"]
+        if "Green" in (self.style_name or ""):
+            return COLORS["success"]
+        return COLORS["text"]
+
+    def _watch_variable(self):
+        if self._trace_id:
+            try:
+                self.variable.trace_remove("write", self._trace_id)
+            except Exception:
+                pass
+        try:
+            self._trace_id = self.variable.trace_add("write", lambda *_: self._draw())
+        except Exception:
+            self._trace_id = None
+
+    def _set_hover(self, value):
+        self.hover = value
+        self._draw()
+
+    def _click(self, _event=None):
+        if str(self.state) == "disabled":
+            return
+        self.variable.set(self.offvalue if self._checked() else self.onvalue)
+        self._draw()
+        if self.command:
+            self.command()
+
+    def _draw_box(self, x1, y1, x2, y2, checked, disabled):
+        if checked:
+            fill = COLORS["disabled_bg"] if disabled else COLORS["primary"]
+            border = COLORS["disabled_text"] if disabled else COLORS["primary_hover"]
+        else:
+            fill = self._bg()
+            border = COLORS["disabled_text"] if disabled else COLORS["border_strong"]
+        _rounded_rect(self, x1, y1, x2, y2, 5, fill=fill, outline=border, width=1)
+        if checked:
+            self.create_line(x1 + 5, y1 + 11, x1 + 9, y1 + 15, x2 - 5, y1 + 6, fill="#FFFFFF", width=2, capstyle="round", joinstyle="round")
+        elif self.hover and not disabled:
+            _rounded_rect(self, x1, y1, x2, y2, 5, fill="", outline=COLORS["focus_ring"], width=1)
+
+    def _draw(self):
+        self.delete("all")
+        disabled = str(self.state) == "disabled"
+        bg = self._bg()
+        Canvas.configure(self, background=bg)
+        checked = self._checked()
+        self._draw_box(3, 5, 23, 25, checked, disabled)
+        if self.text:
+            self.create_text(32, 15, text=self.text, fill=self._label_color(), anchor="w", font=("Segoe UI Variable Text", 10), width=max(80, self.winfo_width() - 36))
+
+    def configure(self, cnf=None, **kwargs):
+        opts = {}
+        if cnf:
+            opts.update(cnf)
+        opts.update(kwargs)
+        redraw = False
+        for key in list(opts):
+            if key == "text":
+                self.text = opts.pop(key) or ""
+                Canvas.configure(self, width=self._desired_width(), height=self._desired_height())
+                redraw = True
+            elif key == "variable":
+                self.variable = opts.pop(key)
+                self._watch_variable()
+                redraw = True
+            elif key == "command":
+                self.command = opts.pop(key)
+            elif key == "style":
+                self.style_name = opts.pop(key) or "TCheckbutton"
+                redraw = True
+            elif key == "state":
+                self.state = opts.pop(key)
+                redraw = True
+            elif key == "onvalue":
+                self.onvalue = opts.pop(key)
+                redraw = True
+            elif key == "offvalue":
+                self.offvalue = opts.pop(key)
+                redraw = True
+            elif key in {"foreground", "background", "font", "padding"}:
+                opts.pop(key)
+        if opts:
+            Canvas.configure(self, **opts)
+        self._draw()
+
+    config = configure
+
+    def cget(self, key):
+        if key == "text":
+            return self.text
+        if key == "style":
+            return self.style_name
+        if key == "state":
+            return self.state
+        return Canvas.cget(self, key)
+
+    def keys(self):
+        return list(Canvas.keys(self)) + ["text", "style", "state", "variable", "command"]
+
+
+class ModernRadiobutton(ModernCheckbutton):
+    def __init__(self, master, text="", variable=None, value=None, command=None, style=None, state="normal", **kwargs):
+        self.value = value if value is not None else text
+        super().__init__(master, text=text, variable=variable or StringVar(master=master), command=command, style=style or "TRadiobutton", state=state, **kwargs)
+
+    def _checked(self):
+        try:
+            return self.variable.get() == self.value
+        except Exception:
+            return False
+
+    def _click(self, _event=None):
+        if str(self.state) == "disabled":
+            return
+        self.variable.set(self.value)
+        self._draw()
+        if self.command:
+            self.command()
+
+    def _draw_box(self, x1, y1, x2, y2, checked, disabled):
+        border = COLORS["disabled_text"] if disabled else COLORS["primary"] if checked else COLORS["border_strong"]
+        fill = self._bg()
+        self.create_oval(x1, y1, x2, y2, fill=fill, outline=border, width=2)
+        if checked:
+            self.create_oval(x1 + 6, y1 + 6, x2 - 6, y2 - 6, fill=COLORS["primary"], outline="")
+        elif self.hover and not disabled:
+            self.create_oval(x1 + 1, y1 + 1, x2 - 1, y2 - 1, fill="", outline=COLORS["focus_ring"], width=1)
+
+    def configure(self, cnf=None, **kwargs):
+        opts = {}
+        if cnf:
+            opts.update(cnf)
+        opts.update(kwargs)
+        if "value" in opts:
+            self.value = opts.pop("value")
+        return super().configure(opts)
+
+
+ttk.Checkbutton = ModernCheckbutton
+ttk.Radiobutton = ModernRadiobutton
+
+
 class ToggleSwitch(Canvas):
     def __init__(self, master, variable, command=None, state="normal"):
-        super().__init__(master, width=48, height=26, highlightthickness=0, borderwidth=0, background=COLORS["surface"], cursor="hand2")
+        super().__init__(master, width=50, height=28, highlightthickness=0, borderwidth=0, background=COLORS["surface"], cursor="hand2")
         self.variable = variable
         self.command = command
         self.state = state
@@ -531,17 +757,21 @@ class ToggleSwitch(Canvas):
 
     def _draw(self):
         self.delete("all")
-        Canvas.configure(self, background=COLORS["surface"])
+        try:
+            parent_style = self.master.cget("style") if "style" in self.master.keys() else ""
+        except Exception:
+            parent_style = ""
+        Canvas.configure(self, background=COLORS["surface"] if "Panel" in parent_style else COLORS["background"])
         on = bool(self.variable.get())
         disabled = str(self.state) == "disabled"
         track = COLORS["disabled_bg"] if disabled else COLORS["primary"] if on else COLORS["surface_subtle"]
         border = COLORS["disabled_text"] if disabled else COLORS["primary"] if on else COLORS["border_strong"]
         knob = COLORS["disabled_text"] if disabled else "#FFFFFF" if on else COLORS["text"]
-        _rounded_rect(self, 1, 3, 47, 23, 12, fill=track, outline=border, width=1)
-        x = 35 if on else 13
-        self.create_oval(x - 8, 5, x + 8, 21, fill=knob, outline="")
+        _rounded_rect(self, 1, 3, 49, 25, 13, fill=track, outline=border, width=1)
+        x = 36 if on else 14
+        self.create_oval(x - 9, 5, x + 9, 23, fill=knob, outline=COLORS["border"])
         if self.hover and not disabled:
-            _rounded_rect(self, 1, 3, 47, 23, 12, fill="", outline=COLORS["focus_ring"], width=1)
+            _rounded_rect(self, 1, 3, 49, 25, 13, fill="", outline=COLORS["focus_ring"], width=1)
 
     def configure(self, cnf=None, **kwargs):
         opts = {}
@@ -555,6 +785,88 @@ class ToggleSwitch(Canvas):
         self._draw()
 
     config = configure
+
+
+class ThemedProgressbar(Canvas):
+    def __init__(self, master, mode="determinate", length=None, maximum=100, value=0, style=None, **kwargs):
+        width = int(length or kwargs.pop("width", 280))
+        super().__init__(master, width=width, height=14, highlightthickness=0, borderwidth=0, background=COLORS["background"])
+        self.mode = mode
+        self.maximum = max(1, float(maximum))
+        self.value = float(value)
+        self._running = False
+        self._phase = 0
+        self.bind("<Configure>", lambda _e: self._draw())
+        self._draw()
+
+    def _draw(self):
+        self.delete("all")
+        w, h = max(1, self.winfo_width()), max(1, self.winfo_height())
+        Canvas.configure(self, background=COLORS["background"])
+        _rounded_rect(self, 1, 3, w - 1, h - 3, 6, fill=COLORS["surface_subtle"], outline=COLORS["border"], width=1)
+        if self.mode == "indeterminate" and self._running:
+            span = max(42, w // 4)
+            x = (self._phase % max(1, w + span)) - span
+            _rounded_rect(self, max(2, x), 4, min(w - 2, x + span), h - 4, 5, fill=COLORS["primary"], outline="", width=0)
+        else:
+            frac = max(0, min(1, self.value / self.maximum))
+            if frac:
+                _rounded_rect(self, 2, 4, max(8, int((w - 4) * frac)), h - 4, 5, fill=COLORS["primary"], outline="", width=0)
+
+    def _tick(self):
+        if not self._running:
+            return
+        self._phase += 12
+        self._draw()
+        self.after(35, self._tick)
+
+    def start(self, interval=None):
+        if self._running:
+            return
+        self._running = True
+        self.mode = "indeterminate"
+        self._tick()
+
+    def stop(self):
+        self._running = False
+        self._draw()
+
+    def configure(self, cnf=None, **kwargs):
+        opts = {}
+        if cnf:
+            opts.update(cnf)
+        opts.update(kwargs)
+        for key in list(opts):
+            if key == "mode":
+                self.mode = opts.pop(key)
+            elif key == "maximum":
+                self.maximum = max(1, float(opts.pop(key)))
+            elif key == "value":
+                self.value = float(opts.pop(key))
+            elif key in {"style", "length"}:
+                if key == "length":
+                    Canvas.configure(self, width=int(opts[key]))
+                opts.pop(key)
+        if opts:
+            Canvas.configure(self, **opts)
+        self._draw()
+
+    config = configure
+
+    def cget(self, key):
+        if key == "mode":
+            return self.mode
+        if key == "maximum":
+            return self.maximum
+        if key == "value":
+            return self.value
+        return Canvas.cget(self, key)
+
+    def keys(self):
+        return list(Canvas.keys(self)) + ["mode", "maximum", "value", "style", "length"]
+
+
+ttk.Progressbar = ThemedProgressbar
 
 
 BUTTON_STYLES = {
@@ -594,10 +906,37 @@ def Badge(parent, text, variant="neutral"):
     return ttk.Label(parent, text=text, style=f"Badge.{variant.title()}.TLabel")
 
 
+class RoundedInputShell(Canvas):
+    def __init__(self, master, width=240, height=34):
+        super().__init__(master, width=width, height=height, highlightthickness=0, borderwidth=0, background=COLORS["background"])
+        self.focused = False
+        self.bind("<Configure>", lambda _e: self._draw())
+
+    def set_focused(self, value):
+        self.focused = value
+        self._draw()
+
+    def _draw(self):
+        self.delete("shell")
+        w, h = max(1, self.winfo_width()), max(1, self.winfo_height())
+        try:
+            parent_style = self.master.cget("style") if "style" in self.master.keys() else ""
+        except Exception:
+            parent_style = ""
+        bg = COLORS["surface"] if "Panel" in parent_style else COLORS["background"]
+        Canvas.configure(self, background=bg)
+        border = COLORS["focus_ring"] if self.focused else COLORS["border_strong"]
+        _rounded_rect(self, 1, 1, w - 1, h - 1, 8, fill=COLORS["surface"], outline=border, width=1, tags="shell")
+        self.itemconfigure("search_icon", fill=COLORS["muted"])
+
+
 def SearchEntry(parent, textvariable, command=None, width=32):
-    frame = ttk.Frame(parent, style="Search.TFrame", padding=(8, 4))
-    entry = ttk.Entry(frame, textvariable=textvariable, width=width)
-    entry.pack(side=LEFT, fill="x", expand=True)
+    frame = RoundedInputShell(parent, width=max(180, width * 8 + 36), height=36)
+    entry = ttk.Entry(frame, textvariable=textvariable, width=width, style="Search.TEntry")
+    frame.create_text(18, 18, text="⌕", fill=COLORS["muted"], font=("Segoe UI Symbol", 13), tags=("search_icon",))
+    frame.create_window(34, 18, window=entry, anchor="w", width=max(120, width * 8 - 4), height=24, tags=("entry_window",))
+    entry.bind("<FocusIn>", lambda _e: frame.set_focused(True), add="+")
+    entry.bind("<FocusOut>", lambda _e: frame.set_focused(False), add="+")
     if command:
         entry.bind("<KeyRelease>", command)
     return frame, entry
@@ -667,7 +1006,6 @@ class App:
         except Exception:
             pass
 
-        self.load_private_font(APP_FONT_PATH)
         self.root.option_add("*Font", ("Segoe UI Variable Text", 10))
 
         self.apps = self.load_apps()
@@ -681,6 +1019,7 @@ class App:
         self.debloat_vars = {}
         self.feature_vars = {}
         self.installed_rows = {}
+        self.installed_selected = {}
         self.toggle_widgets = []
         self.vt_cache = {}
         self.c2_indicator_sources = {}
@@ -858,16 +1197,6 @@ class App:
     def fsize(self, size):
         return max(8, round(size * int(self.settings.get("font_scale", "100")) / 100))
 
-    @staticmethod
-    def load_private_font(path):
-        if not path.exists() or os.name != "nt":
-            return False
-        try:
-            ctypes.windll.gdi32.AddFontResourceExW(str(path), 0x10, 0)
-            return True
-        except Exception:
-            return False
-
     def _style(self):
         style = ttk.Style()
         try:
@@ -925,6 +1254,8 @@ class App:
         style.configure("TRadiobutton", background=panel, foreground=COLORS["text"], font=body_font)
         style.configure("TEntry", fieldbackground=glass, foreground=COLORS["text"], insertcolor=COLORS["text"], bordercolor=COLORS["border"], lightcolor=COLORS["border"], darkcolor=COLORS["border"], padding=(8, 6))
         style.map("TEntry", fieldbackground=[("disabled", disabled_bg), ("focus", panel)], bordercolor=[("focus", COLORS["focus_ring"])], foreground=[("disabled", disabled_text)])
+        style.configure("Search.TEntry", fieldbackground=panel, background=panel, foreground=COLORS["text"], insertcolor=COLORS["text"], bordercolor=panel, lightcolor=panel, darkcolor=panel, padding=(0, 2))
+        style.map("Search.TEntry", fieldbackground=[("focus", panel), ("!disabled", panel)], foreground=[("disabled", disabled_text)])
         style.configure("TCombobox", fieldbackground=glass, foreground=COLORS["text"], arrowcolor=COLORS["muted"], bordercolor=COLORS["border"], lightcolor=COLORS["border"], darkcolor=COLORS["border"], padding=(8, 6))
         style.map("TCombobox", fieldbackground=[("readonly", glass), ("disabled", disabled_bg)], foreground=[("disabled", disabled_text)], bordercolor=[("focus", COLORS["focus_ring"])])
         style.configure("TButton", background=panel, foreground=COLORS["text"], bordercolor=COLORS["border"], lightcolor=COLORS["border"], darkcolor=COLORS["border"], focusthickness=1, focuscolor=COLORS["focus_ring"], padding=(14, 8), font=button_font)
@@ -1018,9 +1349,6 @@ class App:
         self._settings_tab()
         self._about_tab()
         self._build_nav()
-        self._recursive_panel_style(self.root)
-        self._repaint_widget_backgrounds(self.root)
-        self._restyle_dynamic_widgets(self.root)
 
         bottom = ttk.Frame(self.root, padding=(12, 8))
         bottom.pack(fill="x", padx=18, pady=(0, 18))
@@ -1052,6 +1380,11 @@ class App:
             self.brand_utils_label.configure(foreground=COLORS.get("magenta", base) if theme == "Cyberpunk" else base)
         if hasattr(self, "brand_subtitle_label"):
             self.brand_subtitle_label.configure(foreground=COLORS["muted"])
+        if hasattr(self, "about_useful_label"):
+            base = "#0F172A" if theme == "Light" else "#F8FAFC"
+            self.about_useful_label.configure(foreground=base)
+            self.about_windows_label.configure(foreground=COLORS["primary"])
+            self.about_utils_label.configure(foreground=COLORS.get("magenta", base) if theme == "Cyberpunk" else base)
 
     def _recursive_panel_style(self, widget, in_panel=False):
         try:
@@ -1091,6 +1424,12 @@ class App:
         elif isinstance(widget, ToggleSwitch):
             widget._draw()
             bg = COLORS["panel"]
+        elif isinstance(widget, (ModernCheckbutton, ModernRadiobutton, RoundedInputShell)):
+            widget._draw()
+            bg = widget.cget("background")
+        elif isinstance(widget, ThemedProgressbar):
+            widget._draw()
+            bg = COLORS["background"]
         elif isinstance(widget, ThemedScrollbar):
             bg = COLORS["glass"]
             widget._draw()
@@ -1112,26 +1451,23 @@ class App:
     def _build_nav(self):
         for w in self.nav.winfo_children():
             w.destroy()
-        icons = ["📱", "📦", "🛠", "✨", "🛡️", "🔬", "🗂", "💿", "↔", "📡", "⚙", "ℹ️"]
         icon_map = {
-            "Apps": icons[0],
-            "Installed": icons[1],
-            "Windows Tweaks": icons[2],
-            "Features": icons[3],
-            "Security": icons[4],
-            "PATH": icons[6],
-            "ISO": icons[7],
-            "File Mover": icons[8],
-            "Settings": icons[10],
-            "About": icons[11],
+            "Apps": "▦",
+            "Installed": "▣",
+            "Windows Tweaks": "⚙",
+            "Features": "✦",
+            "Security": "🛡",
+            "PATH": "⌁",
+            "ISO": "◉",
+            "File Mover": "↔",
+            "Settings": "⚙",
+            "About": "ⓘ",
         }
         for i in range(self.tabs.index("end")):
             label = self.tabs.tab(i, "text")
-            # attempt to translate the base label if we have it
             trans_label = self._(label)
-            text = f"  {icon_map.get(label, '')}   {trans_label}"
+            text = f"{icon_map.get(label, '')}\t{trans_label}"
             ttk.Button(self.nav, text=text, style="Nav.TButton", width=24, command=lambda idx=i: self.tabs.select(idx)).pack(fill="x", pady=2)
-
     def _logbox(self, parent, height=8):
         box = Text(parent, height=height, bg=COLORS["log"], fg=COLORS["log_text"], insertbackground=COLORS["log_text"], relief="flat", padx=12, pady=10, bd=0, highlightthickness=1, highlightbackground=COLORS["border"], highlightcolor=COLORS["focus_ring"])
         box.configure(font=("Consolas", 10))
@@ -1275,8 +1611,10 @@ class App:
 
         actions = ttk.Frame(top)
         actions.pack(side=RIGHT, padx=12)
-        ttk.Button(actions, text="⬇ " + self._("Install Selected"), style="Accent.TButton", command=lambda: self.package_selected("install")).pack(side=RIGHT, padx=4)
-        ttk.Button(actions, text="↻ " + self._("Upgrade Selected"), command=lambda: self.package_selected("upgrade")).pack(side=RIGHT, padx=4)
+        self.install_selected_button = ttk.Button(actions, text="⬇ " + self._("Install Selected"), style="Accent.TButton", command=lambda: self.package_selected("install"))
+        self.install_selected_button.pack(side=RIGHT, padx=4)
+        self.upgrade_selected_button = ttk.Button(actions, text="↻ " + self._("Upgrade Selected"), command=lambda: self.package_selected("upgrade"))
+        self.upgrade_selected_button.pack(side=RIGHT, padx=4)
         self.mode = StringVar(value=self.settings.get("package_mode", "Winget then Chocolatey"))
         ttk.Combobox(actions, textvariable=self.mode, values=["Winget then Chocolatey", "Winget only", "Chocolatey only"], state="readonly", width=24).pack(side=RIGHT, padx=8)
 
@@ -1317,6 +1655,14 @@ class App:
         top = ttk.Frame(tab, style="Panel.TFrame")
         top.pack(fill="x", pady=(0, 12), padx=10, ipady=6)
         ttk.Button(top, text="Refresh", command=self.refresh_installed).pack(side=LEFT, padx=(12, 4))
+        section_row = ttk.Frame(top, style="PanelInner.TFrame")
+        section_row.pack(side=LEFT, padx=8)
+        self.installed_sections = {}
+        self.installed_section_buttons = {}
+        for name in ("Installer", "Debloater"):
+            btn = ttk.Button(section_row, text=name, style="Secondary.TButton", width=14, command=lambda n=name: self.show_installed_section(n))
+            btn.pack(side=LEFT, padx=4)
+            self.installed_section_buttons[name] = btn
         
         actions = ttk.Frame(top)
         actions.pack(side=RIGHT, padx=12)
@@ -1324,30 +1670,41 @@ class App:
         ttk.Button(actions, text="↻ Upgrade Selected", style="Accent.TButton", command=self.upgrade_installed).pack(side=LEFT, padx=4)
         ttk.Button(actions, text="⌫ Uninstall Selected", style="Danger.TButton", command=self.uninstall_installed).pack(side=LEFT, padx=4)
 
-        installed_book = ttk.Notebook(tab)
-        installed_book.pack(fill=BOTH, expand=True, padx=10)
-        apps_tab = ttk.Frame(installed_book, padding=8)
-        debloat_tab = ttk.Frame(installed_book, padding=8)
-        installed_book.add(apps_tab, text="Installed Apps")
-        installed_book.add(debloat_tab, text="Debloater")
+        content = ttk.Frame(tab)
+        content.pack(fill=BOTH, expand=True, padx=10)
+        apps_tab = ttk.Frame(content, padding=8)
+        debloat_tab = ttk.Frame(content, padding=8)
+        self.installed_sections["Installer"] = apps_tab
+        self.installed_sections["Debloater"] = debloat_tab
         self._debloater_section(debloat_tab)
 
         vsplit = ttk.PanedWindow(apps_tab, orient="vertical")
         vsplit.pack(fill=BOTH, expand=True)
         tree_frame = ttk.Frame(vsplit)
         vsplit.add(tree_frame, weight=3)
-        self.installed_tree = ttk.Treeview(tree_frame, columns=("name", "id", "version"), show="headings")
+        self.installed_tree = ttk.Treeview(tree_frame, columns=("sel", "name", "id", "version"), show="headings")
+        self.installed_tree.heading("sel", text="")
         self.installed_tree.heading("name", text="Name")
         self.installed_tree.heading("id", text="Package ID")
         self.installed_tree.heading("version", text="Version")
+        self.installed_tree.column("sel", width=48, minwidth=48, stretch=False, anchor="center")
         self.installed_tree.pack(fill=BOTH, expand=True, pady=(0, 10))
+        self.installed_tree.bind("<Button-1>", self.installed_tree_click, add="+")
         
         log_pane = ttk.Frame(vsplit)
         vsplit.add(log_pane, weight=1)
         self.installed_log = self._logbox(log_pane)
         self.installed_log.pack(fill=BOTH, expand=True)
         self._log_tools(log_pane, self.installed_log)
-        self.root.after(300, self.refresh_installed)
+        self.show_installed_section("Installer")
+        self.root.after(1200, self.refresh_installed)
+
+    def show_installed_section(self, name):
+        for section in self.installed_sections.values():
+            section.pack_forget()
+        for section_name, button in self.installed_section_buttons.items():
+            button.configure(style="Accent.TButton" if section_name == name else "Secondary.TButton")
+        self.installed_sections[name].pack(fill=BOTH, expand=True)
 
     def _debloater_section(self, tab):
         top = ttk.Frame(tab, style="Panel.TFrame")
@@ -1409,7 +1766,7 @@ class App:
         
         actions = ttk.Frame(top)
         actions.pack(side=RIGHT, padx=12)
-        ttk.Button(actions, text="Create Restore Point", command=lambda: self.run_ps("Checkpoint-Computer -Description 'UsefulWindowsUtils Python' -RestorePointType MODIFY_SETTINGS", self.tweak_log)).pack(side=LEFT, padx=4)
+        ttk.Button(actions, text="Create Restore Point", command=lambda: self.run_ps(f"Checkpoint-Computer -Description '{APP_NAME}' -RestorePointType MODIFY_SETTINGS", self.tweak_log)).pack(side=LEFT, padx=4)
         ttk.Button(actions, text="Clear Selected", command=self.clear_selected_tweaks).pack(side=LEFT, padx=4)
         ttk.Button(actions, text="Apply Selected Tweaks", style="Accent.TButton", command=self.apply_selected_tweaks).pack(side=LEFT, padx=4)
 
@@ -1525,10 +1882,13 @@ class App:
         section_row = ttk.Frame(tab, style="Panel.TFrame")
         section_row.pack(fill="x", pady=(0, 12), ipady=6)
         self.security_sections = {}
+        self.security_section_buttons = {}
         for name in ("System", "VirusTotal", "C2 Collector"):
             section = ttk.Frame(tab, padding=12)
             self.security_sections[name] = section
-            ttk.Button(section_row, text=name, command=lambda n=name: self.show_security_section(n)).pack(side=LEFT, padx=(12 if name == "System" else 4, 4))
+            btn = ttk.Button(section_row, text=name, style="Secondary.TButton", command=lambda n=name: self.show_security_section(n))
+            btn.pack(side=LEFT, padx=(12 if name == "System" else 4, 4))
+            self.security_section_buttons[name] = btn
 
         system_tab = self.security_sections["System"]
         vt_tab = self.security_sections["VirusTotal"]
@@ -1582,6 +1942,8 @@ class App:
     def show_security_section(self, name):
         for section in self.security_sections.values():
             section.pack_forget()
+        for section_name, button in getattr(self, "security_section_buttons", {}).items():
+            button.configure(style="Accent.TButton" if section_name == name else "Secondary.TButton")
         self.security_sections[name].pack(fill=BOTH, expand=True)
 
     def _vt_tab(self, tab=None):
@@ -1820,47 +2182,52 @@ class App:
         if tab is None:
             tab = ttk.Frame(self.tabs, padding=12)
             self.tabs.add(tab, text="C2 Intelligence")
-        self._hero_banner(tab, "📡", "Threat Intelligence Dashboard", "Collect, filter, and enrich active Command & Control indicators.")
+        head = ttk.Frame(tab, style="Panel.TFrame", padding=(12, 8))
+        head.pack(fill="x", padx=10, pady=(0, 6))
+        ttk.Label(head, text="C2 Collector", font=("Segoe UI Variable Display", 12, "bold"), style="Panel.TLabel").pack(side=LEFT, padx=(0, 10))
+        ttk.Label(head, text="Collect, filter, and enrich Command & Control indicators.", foreground=COLORS["muted"], font=("Segoe UI Variable Text", 9)).pack(side=LEFT)
         
         cards = ttk.Frame(tab)
         cards.pack(fill="x", padx=10)
         
         cfg = ttk.Frame(cards, style="Panel.TFrame")
-        cfg.pack(fill="x", pady=(0, 10), ipady=4)
-        ttk.Label(cfg, text="Data Sources & Limits", font=("Segoe UI", 12, "bold")).pack(anchor="w", padx=12, pady=(12, 4))
+        cfg.pack(fill="x", pady=(0, 6), ipady=2)
+        ttk.Label(cfg, text="Data Sources & Limits", font=("Segoe UI", 11, "bold")).pack(anchor="w", padx=12, pady=(8, 2))
         
-        source_row = ttk.Frame(cfg)
-        source_row.pack(fill="x", padx=16, pady=4)
+        source_row = ttk.Frame(cfg, style="PanelInner.TFrame")
+        source_row.pack(fill="x", padx=12, pady=2)
+        for col in range(6):
+            source_row.columnconfigure(col, weight=1, uniform="c2src")
         
         self.c2_source_vars, self.c2_limit_vars = {}, {}
         saved_sources = self.settings.get("c2_sources", {})
         saved_limits = self.settings.get("c2_limits", {})
-        for name in C2_SOURCES:
+        for i, name in enumerate(C2_SOURCES):
             self.c2_source_vars[name] = BooleanVar(value=bool(saved_sources.get(name, True)))
             self.c2_limit_vars[name] = StringVar(value=str(saved_limits.get(name, 100)))
-            frame = ttk.Frame(source_row)
-            frame.pack(side=LEFT, padx=(0, 12))
+            frame = ttk.Frame(source_row, style="PanelInner.TFrame")
+            frame.grid(row=0, column=i, sticky="w", padx=(0, 6), pady=1)
             ttk.Checkbutton(frame, text=name, variable=self.c2_source_vars[name]).pack(side=LEFT)
             ttk.Entry(frame, textvariable=self.c2_limit_vars[name], width=5).pack(side=LEFT, padx=(4, 0))
             
         opts_row = ttk.Frame(cfg)
-        opts_row.pack(fill="x", padx=16, pady=(8, 4))
+        opts_row.pack(fill="x", padx=12, pady=(4, 2))
         self.c2_days = StringVar(value=str(self.settings.get("c2_days", "7")))
         ttk.Label(opts_row, text="Lookback Days:").pack(side=LEFT)
         ttk.Entry(opts_row, textvariable=self.c2_days, width=5).pack(side=LEFT, padx=4)
         ttk.Button(opts_row, text="Save Config", command=self.save_c2_config).pack(side=LEFT, padx=(12, 0))
 
         folder_row = ttk.Frame(cfg)
-        folder_row.pack(fill="x", padx=16, pady=(4, 8))
+        folder_row.pack(fill="x", padx=12, pady=(2, 6))
         self.c2_output_folder = StringVar(value=self.settings.get("c2_output_dir", "outputs"))
         ttk.Label(folder_row, text="Report Folder:").pack(side=LEFT)
         ttk.Entry(folder_row, textvariable=self.c2_output_folder).pack(side=LEFT, fill="x", expand=True, padx=4)
         ttk.Button(folder_row, text="Browse", command=self.pick_c2_output_folder).pack(side=LEFT)
         
         actions = ttk.Frame(cards, style="Panel.TFrame")
-        actions.pack(fill="x", pady=(0, 10), ipady=4)
+        actions.pack(fill="x", pady=(0, 6), ipady=2)
         top = ttk.Frame(actions)
-        top.pack(fill="x", padx=16, pady=(12, 12))
+        top.pack(fill="x", padx=12, pady=(8, 8))
         
         self.c2_kind = StringVar(value="IPs")
         self.c2_family = StringVar(value="Any")
@@ -1876,14 +2243,18 @@ class App:
         ttk.Button(top, text="Load TXT", command=self.c2_load_txt).pack(side=RIGHT, padx=4)
 
         self.c2_progress = ttk.Progressbar(tab, mode="determinate", style="Visible.Horizontal.TProgressbar")
-        self.c2_progress.pack(fill="x", padx=10, pady=(0, 10))
-        self.c2_text = Text(tab, height=4, relief="flat") # Hidden unless used for manual input
+        self.c2_progress.pack(fill="x", padx=10, pady=(0, 6))
+        self.c2_text = Text(tab, height=2, relief="flat") # Hidden unless used for manual input
+
+        log_pane = ttk.Frame(tab)
+        log_pane.pack(side="bottom", fill="x", padx=10, pady=(6, 0))
+        self.c2_log = self._logbox(log_pane, 6)
+        self.c2_log.pack(fill=BOTH, expand=True)
+        self._log_tools(log_pane, self.c2_log)
 
         cols = ("indicator", "type", "risk", "ratio", "country", "asn", "as_owner", "engines")
-        c2_vsplit = ttk.PanedWindow(tab, orient="vertical")
-        c2_vsplit.pack(fill=BOTH, expand=True, padx=10)
-        tree_frame = ttk.Frame(c2_vsplit)
-        c2_vsplit.add(tree_frame, weight=2)
+        tree_frame = ttk.Frame(tab)
+        tree_frame.pack(fill=BOTH, expand=True, padx=10)
         self.c2_tree = ttk.Treeview(tree_frame, columns=cols, show="headings")
         for c in cols:
             self.c2_tree.heading(c, text=c.replace("_", " ").title())
@@ -1894,11 +2265,6 @@ class App:
         self.c2_tree.tag_configure("LOW", foreground=COLORS["green"])
         self.c2_tree.tag_configure("CLEAN", foreground=COLORS["green"])
         self.c2_rows = []
-        log_pane = ttk.Frame(c2_vsplit)
-        c2_vsplit.add(log_pane, weight=1)
-        self.c2_log = self._logbox(log_pane)
-        self.c2_log.pack(fill=BOTH, expand=True)
-        self._log_tools(log_pane, self.c2_log)
 
     def _settings_tab(self):
         tab = ttk.Frame(self.tabs, padding=12)
@@ -1931,7 +2297,7 @@ class App:
         ttk.Label(row, text="Language:").pack(side=LEFT)
         lang_box = ttk.Combobox(row, textvariable=self.language, values=["English", "Spanish", "French", "Russian", "Hindi", "Punjabi"], state="readonly", width=14)
         lang_box.pack(side=LEFT, padx=8)
-        lang_box.bind("<<ComboboxSelected>>", lambda _e: self.save_settings())
+        lang_box.bind("<<ComboboxSelected>>", lambda _e: self.apply_language())
         
         # API Keys Card
         keysc = ttk.Frame(cards, style="Panel.TFrame")
@@ -1968,8 +2334,15 @@ class App:
         
         hero = ttk.Frame(tab)
         hero.pack(fill="x", pady=(40, 30))
-        ttk.Label(hero, text="UsefulWindowsUtils", font=(APP_TITLE_FONT, 32, "bold"), foreground=COLORS["accent"]).pack(anchor="center")
-        ttk.Label(hero, text="Version 1.0.0", font=("Segoe UI", 11), foreground=COLORS["muted"]).pack(anchor="center")
+        title_row = ttk.Frame(hero)
+        title_row.pack(anchor="center")
+        self.about_useful_label = ttk.Label(title_row, text="Useful", font=("Segoe UI Variable Display", 32, "bold"))
+        self.about_windows_label = ttk.Label(title_row, text="Windows", font=("Segoe UI Variable Display", 32, "bold"), foreground=COLORS["primary"])
+        self.about_utils_label = ttk.Label(title_row, text="Utils", font=("Segoe UI Variable Display", 32, "bold"))
+        self.about_useful_label.pack(side=LEFT)
+        self.about_windows_label.pack(side=LEFT)
+        self.about_utils_label.pack(side=LEFT)
+        ttk.Label(hero, text=f"Version {APP_VERSION}", font=("Segoe UI", 11), foreground=COLORS["muted"]).pack(anchor="center")
         
         cards = ttk.Frame(tab)
         cards.pack(fill="x", padx=10)
@@ -2008,6 +2381,16 @@ class App:
     def apply_font_scale(self):
         self.settings["font_scale"] = self.font_scale.get()
         self._style()
+        save_json(SETTINGS_PATH, self.settings)
+
+    def apply_language(self):
+        self.settings["language"] = self.language.get()
+        self._build_nav()
+        if hasattr(self, "install_selected_button"):
+            self.install_selected_button.configure(text="⬇ " + self._("Install Selected"))
+        if hasattr(self, "upgrade_selected_button"):
+            self.upgrade_selected_button.configure(text="↻ " + self._("Upgrade Selected"))
+        self.status.configure(text=self._("Ready"))
         save_json(SETTINGS_PATH, self.settings)
 
     def apply_theme(self, theme, force=False):
@@ -2102,6 +2485,10 @@ class App:
         elif isinstance(widget, RoundedButton):
             widget._draw()
         elif isinstance(widget, ToggleSwitch):
+            widget._draw()
+        elif isinstance(widget, (ModernCheckbutton, ModernRadiobutton, RoundedInputShell)):
+            widget._draw()
+        elif isinstance(widget, ThemedProgressbar):
             widget._draw()
         elif isinstance(widget, ThemedScrollbar):
             widget._draw()
@@ -3118,6 +3505,7 @@ if (-not $packages -and -not $provisioned) {{
     def populate_installed(self, rows, box):
         self.installed_tree.delete(*self.installed_tree.get_children())
         self.installed_rows.clear()
+        self.installed_selected.clear()
         seen = set()
         for row in rows:
             name = row["name"]
@@ -3126,9 +3514,25 @@ if (-not $packages -and -not $provisioned) {{
             if key in seen:
                 continue
             seen.add(key)
-            iid = self.installed_tree.insert("", END, values=(name, name, version))
+            iid = self.installed_tree.insert("", END, values=("☐", name, name, version))
             self.installed_rows[iid] = row
+            self.installed_selected[iid] = False
         self.log(box, f"Loaded {len(self.installed_rows)} installed apps.")
+
+    def installed_tree_click(self, event):
+        if self.installed_tree.identify_region(event.x, event.y) != "cell":
+            return
+        iid = self.installed_tree.identify_row(event.y)
+        if not iid:
+            return "break"
+        self.installed_tree.selection_set(iid)
+        selected = not self.installed_selected.get(iid, False)
+        self.installed_selected[iid] = selected
+        values = list(self.installed_tree.item(iid, "values"))
+        if values:
+            values[0] = "☑" if selected else "☐"
+            self.installed_tree.item(iid, values=values)
+        return "break"
 
     def installed_registry_rows(self):
         if not winreg:
@@ -3184,6 +3588,10 @@ if (-not $packages -and -not $provisioned) {{
         sel = self.installed_tree.selection()
         return self.installed_rows.get(sel[0], {}) if sel else {}
 
+    def selected_installed_rows(self):
+        checked = [self.installed_rows[iid] for iid, selected in self.installed_selected.items() if selected and iid in self.installed_rows]
+        return checked or ([self.selected_installed_row()] if self.selected_installed_row() else [])
+
     def upgrade_installed(self):
         pkg = self.selected_installed_id()
         if pkg:
@@ -3192,10 +3600,13 @@ if (-not $packages -and -not $provisioned) {{
             self.log(self.installed_log, "WARN Select an installed app first.")
 
     def uninstall_installed(self):
-        row = self.selected_installed_row()
-        if row and messagebox.askyesno("Uninstall", f"Uninstall {row['name']}?"):
-            self.thread("Uninstall selected", self.uninstall_installed_worker, row, self.installed_log)
-        elif not row:
+        rows = self.selected_installed_rows()
+        if rows:
+            names = ", ".join(row["name"] for row in rows[:5])
+            suffix = "" if len(rows) <= 5 else f" and {len(rows) - 5} more"
+            if messagebox.askyesno("Uninstall", f"Uninstall {len(rows)} selected app(s)?\n\n{names}{suffix}"):
+                self.thread("Uninstall selected", self.uninstall_installed_worker, rows, self.installed_log)
+        else:
             self.log(self.installed_log, "WARN Select an installed app first.")
 
     def msi_uninstall_cmd(self, row):
@@ -3234,6 +3645,12 @@ if (-not $packages -and -not $provisioned) {{
         return self.run_cmd_collect(["cmd.exe", "/s", "/c", command], box)
 
     def uninstall_installed_worker(self, row, box):
+        if isinstance(row, list):
+            for i, item in enumerate(row, 1):
+                self.log(box, f"Uninstalling {i}/{len(row)}: {item['name']}")
+                self.uninstall_installed_worker(item, box)
+            self.root.after(0, self.refresh_installed)
+            return
         name = row["name"]
         for label, command in [("quiet registry uninstall", row.get("quiet", "")), ("MSI uninstall", self.msi_uninstall_cmd(row)), ("registry uninstall", row.get("uninstall", ""))]:
             if not command:
@@ -4026,3 +4443,4 @@ if __name__ == "__main__":
         self_test()
     else:
         App().run()
+

@@ -1,6 +1,8 @@
-# UsefulWindowsUtils Python
+# UsefulWindowsUtils
 
-UsefulWindowsUtils Python is a comprehensive Windows utility application that combines software installation, system tuning, optional feature management, security triage, threat intelligence querying, PATH environment variable management, ISO patching, and file organization into a single, intuitive desktop user interface. 
+UsefulWindowsUtils is a comprehensive Windows utility application that combines software installation, system tuning, optional feature management, security triage, threat intelligence querying, PATH environment variable management, ISO patching, and file organization into a single, intuitive desktop user interface.
+
+Current version: **1.0.1**
 
 The application is intentionally designed to be dependency-light, relying on the Python standard library, Tkinter, native Windows tools, package-manager CLIs, and configured threat-intelligence APIs.
 
@@ -32,7 +34,8 @@ For more information, please see `DISCLAIMER.md`, `PRIVACY.md`, `SECURITY.md`, a
 ### 💻 Installed Apps Manager
 - **Registry Inventory:** Scans and lists all installed desktop applications extracted from Windows uninstall registry keys.
 - **Auto-Loading Inventory:** Installed apps load automatically on startup; use `Refresh` to rescan.
-- **Debloater:** Bundles a Win11Debloat app catalog and ChrisTitusTech app-removal action under the Installed tab.
+- **Multi-Select Uninstall:** Select installed apps with the tick column or by clicking an app row, then uninstall multiple apps in one action.
+- **Debloater:** Bundles a Win11Debloat app catalog and ChrisTitusTech app-removal action under the Installed tab with fixed rounded Installer/Debloater section controls.
 - **Package Management:** Perform targeted upgrades, bulk upgrades (`Upgrade All`), or trigger uninstalls utilizing Winget.
 - **Smart Elevation Bypass:** Automatically retries user-scope Winget uninstalls without elevation if administrative mode blocks software removal.
 - **Live Output:** Offers full real-time console logging for all execution blocks.
@@ -54,7 +57,7 @@ Allows direct management and troubleshooting of native operating system componen
 - **Quick Links:** Quick access to legacy Windows control panels.
 
 ### 🔒 Security Analysis & Triage
-- **Subsections:** Security groups System, VirusTotal, and C2 Collector workflows in one tab.
+- **Subsections:** Security groups System, VirusTotal, and C2 Collector workflows in one tab with consistent rounded section controls.
 - **Signature Updates:** Trigger manual definition updates for Microsoft Defender Antivirus.
 - **Malware Scanning:** Run quick or comprehensive full system scans via command line.
 - **Cryptographic Hashing:** Instantly compute the SHA256 hash of any file, or generate a full cryptographic folder manifest exported directly to CSV.
@@ -85,13 +88,27 @@ Allows direct management and troubleshooting of native operating system componen
 - **Indicator Harvesting:** Gathers known malicious IP or file hash indicators from threat intelligence platforms (ThreatFox, URLhaus, MalwareBazaar, AlienVault OTX, Pulsedive, or Hybrid Analysis).
 - **Sanitization Filters:** Enforces stringent parsing constraints (e.g., separating public IPv4 indicators from structural hash syntax).
 - **Enrichment Engine:** Automatically pairs incoming results with the VirusTotal API to pull structural risk categorization metadata.
+- **Visible Logs:** Keeps C2 collection logs visible below the results table with compact top controls.
 - **Reporting System:** Compiles flat-file records (`c2_intelligence_YYYYMMDD_HHMM.txt`) alongside styled Excel analytical spreadsheets (`c2_intelligence_YYYYMMDD_HHMM.xlsx`) complete with risk coloring, fixed layouts, and hyperlinked references.
 
 ### ⚙️ Settings & Customization
 - **Themes:** Pick from `Light`, `Dark`, `AMOLED`, or `Cyberpunk`.
-- **Accessibility:** Scale interfaces with custom font metrics.
-- **Localization:** Multi-language interface translations.
+- **Modern UI:** Uses rounded theme-aware buttons, tick boxes, radio controls, toggles, scrollbars, search fields, logs, and progress bars.
+- **Accessibility:** Scale interfaces with custom font metrics and improved text fitting for longer labels.
+- **Localization:** Multi-language interface translations update immediately where supported.
 - **API Store:** Secure, persistent fields to enter and manage threat intel and VirusTotal service tokens.
+
+---
+
+## Version 1.0.1
+
+- Shortened app branding to `UsefulWindowsUtils` across the app and docs.
+- Added modern theme-aware canvas controls for buttons, tick boxes, radio buttons, toggles, progress bars, scrollbars, and search fields.
+- Added multi-select uninstall in Installed Apps.
+- Added fixed Installer/Debloater section controls under Installed.
+- Improved C2 Collector layout so logs stay visible.
+- Improved live language switching for navigation and primary app actions.
+- Removed obsolete runtime image-control assets and the old bundled font.
 
 ---
 
