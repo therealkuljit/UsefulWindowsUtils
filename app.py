@@ -21,7 +21,7 @@ import ssl
 import webbrowser
 from xml.sax.saxutils import escape
 from pathlib import Path
-from tkinter import BOTH, END, LEFT, RIGHT, VERTICAL, BooleanVar, Canvas, Listbox, StringVar, Text, Tk, filedialog, messagebox, Toplevel, Label
+from tkinter import BOTH, END, LEFT, RIGHT, VERTICAL, BooleanVar, Canvas, Listbox, PhotoImage, StringVar, Text, Tk, filedialog, messagebox, Toplevel, Label
 from tkinter import font as tkfont
 from tkinter import ttk
 
@@ -33,9 +33,18 @@ except ImportError:  # pragma: no cover
 
 ROOT = Path(__file__).resolve().parent
 CFG = ROOT / "config"
+DESIGN_REF = ROOT / "docs" / "design-references"
 SETTINGS_PATH = ROOT / "settings.json"
 API_KEYS_PATH = ROOT / "api_keys.json"
 APP_FONT_PATH = ROOT / "assets" / "fonts" / "rostex.regular.ttf"
+BRAND_LOGO_LIGHT_PATH = ROOT / "assets" / "brand" / "logo_light.png"
+BRAND_LOGO_DARK_PATH = ROOT / "assets" / "brand" / "logo_dark.png"
+BRAND_LOGO_AMOLED_PATH = ROOT / "assets" / "brand" / "logo_amoled.png"
+BRAND_LOGO_CYBERPUNK_PATH = ROOT / "assets" / "brand" / "logo_cyberpunk.png"
+BRAND_ICON_LIGHT_PATH = ROOT / "assets" / "brand" / "icon_light.png"
+BRAND_ICON_DARK_PATH = ROOT / "assets" / "brand" / "icon_dark.png"
+BRAND_ICON_AMOLED_PATH = ROOT / "assets" / "brand" / "icon_amoled.png"
+BRAND_ICON_CYBERPUNK_PATH = ROOT / "assets" / "brand" / "icon_cyberpunk.png"
 START2_PATH = ROOT / "assets" / "start" / "start2.bin"
 PROFILE_SETUP_PATH = ROOT / "tools" / "powershell-profile" / "setup.ps1"
 APP_NAME = "UsefulWindowsUtils Python"
@@ -50,6 +59,21 @@ C2_KEY = {
     "Pulsedive": "pd_key",
     "Hybrid Analysis": "ha_key",
 }
+DESIGN_REFERENCE_FILES = (
+    DESIGN_REF / "logo-light.png",
+    DESIGN_REF / "logo-dark.png",
+    DESIGN_REF / "logo-amoled.png",
+    DESIGN_REF / "logo-cyberpunk.png",
+    DESIGN_REF / "ui-light.png",
+    DESIGN_REF / "ui-dark.png",
+    DESIGN_REF / "ui-amoled.png",
+    DESIGN_REF / "ui-cyberpunk.png",
+    DESIGN_REF / "controls-light.png",
+    DESIGN_REF / "controls-dark.png",
+    DESIGN_REF / "controls-amoled.png",
+    DESIGN_REF / "controls-cyberpunk.png",
+    DESIGN_REF / "usefulwindowsutils_ui_redesign_codex_brief.md",
+)
 BUNDLED_FILES = (
     CFG / "applications.json",
     CFG / "dns.json",
@@ -59,8 +83,17 @@ BUNDLED_FILES = (
     CFG / "tweaks.json",
     CFG / "win11debloat-apps.json",
     APP_FONT_PATH,
+    BRAND_LOGO_LIGHT_PATH,
+    BRAND_LOGO_DARK_PATH,
+    BRAND_LOGO_AMOLED_PATH,
+    BRAND_LOGO_CYBERPUNK_PATH,
+    BRAND_ICON_LIGHT_PATH,
+    BRAND_ICON_DARK_PATH,
+    BRAND_ICON_AMOLED_PATH,
+    BRAND_ICON_CYBERPUNK_PATH,
     START2_PATH,
     PROFILE_SETUP_PATH,
+    *DESIGN_REFERENCE_FILES,
 )
 
 TRANSLATIONS = {
@@ -116,64 +149,86 @@ TRANSLATIONS = {
 
 THEMES = {
     "Light": {
-        "bg": "#f4f6fb",
-        "panel": "#ffffff",
-        "glass": "#eef3fa",
-        "text": "#111827",
-        "muted": "#6b7280",
-        "line": "#dbe3ef",
-        "accent": "#2f7af8",
-        "green": "#128a4a",
-        "red": "#b42318",
-        "log": "#0b1220",
-        "log_text": "#d7e1f2",
+        "background": "#F8FAFC", "surface": "#FFFFFF", "surface_subtle": "#F1F5F9", "surface_elevated": "#FFFFFF", "surface_pressed": "#EAF2FF",
+        "text": "#0F172A", "text_muted": "#64748B", "text_subtle": "#94A3B8", "border": "#E2E8F0", "border_strong": "#CBD5E1",
+        "primary": "#0A84FF", "primary_hover": "#0072E5", "primary_pressed": "#005FBF", "primary_soft": "#E7F2FF",
+        "teal": "#00B8A9", "violet": "#7C3AED", "success": "#10B981", "success_soft": "#E8F8F2",
+        "warning": "#F59E0B", "warning_soft": "#FFF7E6", "danger": "#EF4444", "danger_soft": "#FEECEC",
+        "disabled_bg": "#F1F5F9", "disabled_text": "#A3AAB8", "focus_ring": "#0A84FF", "shadow": "#0F172A22",
+        "log": "#0B1220", "log_text": "#E2E8F0",
     },
     "Dark": {
-        "bg": "#202020",
-        "panel": "#2d2d30",
-        "glass": "#3e3e42",
-        "text": "#f5f5f5",
-        "muted": "#a0a0a0",
-        "line": "#454545",
-        "accent": "#007acc",
-        "green": "#4caf50",
-        "red": "#f44336",
-        "log": "#1e1e1e",
-        "log_text": "#d4d4d4",
+        "background": "#0F141C", "surface": "#111827", "surface_subtle": "#162032", "surface_elevated": "#1B2637", "surface_pressed": "#1E3350",
+        "text": "#E2E8F0", "text_muted": "#94A3B8", "text_subtle": "#64748B", "border": "#2E3A4C", "border_strong": "#3B4A60",
+        "primary": "#0D6EFD", "primary_hover": "#2384FF", "primary_pressed": "#0A58CA", "primary_soft": "#102A4D",
+        "teal": "#00B8A9", "violet": "#7C3AED", "success": "#10B981", "success_soft": "#0B2A22",
+        "warning": "#F59E0B", "warning_soft": "#2D2108", "danger": "#EF4444", "danger_soft": "#2A1010",
+        "disabled_bg": "#1A202C", "disabled_text": "#64748B", "focus_ring": "#0D6EFD", "shadow": "#00000066",
+        "log": "#090D14", "log_text": "#D7E3F1",
     },
     "AMOLED": {
-        "bg": "#000000",
-        "panel": "#050505",
-        "glass": "#0d0d0d",
-        "text": "#f5f5f5",
-        "muted": "#bdbdbd",
-        "line": "#242424",
-        "accent": "#3b82f6",
-        "green": "#6ee787",
-        "red": "#ff6b6b",
-        "log": "#000000",
-        "log_text": "#e5e7eb",
+        "background": "#000000", "surface": "#050505", "surface_subtle": "#0A0A0A", "surface_elevated": "#101010", "surface_pressed": "#111A24",
+        "text": "#F8FAFC", "text_muted": "#A1A1AA", "text_subtle": "#71717A", "border": "#242424", "border_strong": "#383838",
+        "primary": "#0A84FF", "primary_hover": "#2994FF", "primary_pressed": "#006AD6", "primary_soft": "#061A33",
+        "teal": "#00D1C1", "violet": "#8B5CF6", "success": "#22C55E", "success_soft": "#061A10",
+        "warning": "#FBBF24", "warning_soft": "#1C1404", "danger": "#F43F5E", "danger_soft": "#21060B",
+        "disabled_bg": "#111111", "disabled_text": "#525252", "focus_ring": "#0A84FF", "shadow": "#000000",
+        "log": "#000000", "log_text": "#F8FAFC",
     },
     "Cyberpunk": {
-        "bg": "#15131d",
-        "panel": "#201d2b",
-        "glass": "#2d293a",
-        "text": "#f6f2ff",
-        "muted": "#b7aec9",
-        "line": "#4b405f",
-        "accent": "#00d4ff",
-        "green": "#6ee787",
-        "red": "#ff5c8a",
-        "log": "#0b0a12",
-        "log_text": "#d8f7ff",
+        "background": "#050816", "surface": "#0B1024", "surface_subtle": "#101735", "surface_elevated": "#111936", "surface_pressed": "#172554",
+        "text": "#E2F0FF", "text_muted": "#9CA3D6", "text_subtle": "#64748B", "border": "#22304A", "border_strong": "#334155",
+        "primary": "#00C8FF", "primary_hover": "#33D6FF", "primary_pressed": "#0099CC", "primary_soft": "#06283A",
+        "teal": "#00E8D1", "violet": "#9D4EDD", "magenta": "#FF2BD6", "success": "#00E8A2", "success_soft": "#04251C",
+        "warning": "#FFB020", "warning_soft": "#2A1700", "danger": "#FF3B5C", "danger_soft": "#2A0610",
+        "disabled_bg": "#111827", "disabled_text": "#4B5563", "focus_ring": "#00C8FF", "glow_cyan": "#00C8FF88", "glow_magenta": "#FF2BD688", "shadow": "#00000099",
+        "log": "#030611", "log_text": "#DDF7FF",
     },
 }
+
+
+def _with_legacy_aliases(tokens):
+    merged = tokens.copy()
+    merged.update({
+        "bg": tokens["background"],
+        "panel": tokens["surface"],
+        "glass": tokens["surface_subtle"],
+        "hover": tokens["surface_pressed"],
+        "pressed": tokens["primary_pressed"],
+        "muted": tokens["text_muted"],
+        "line": tokens["border"],
+        "accent": tokens["primary"],
+        "green": tokens["success"],
+        "red": tokens["danger"],
+    })
+    return merged
+
+
+THEMES = {name: _with_legacy_aliases(tokens) for name, tokens in THEMES.items()}
 COLORS = THEMES["Light"].copy()
 
 
 def set_colors(theme):
     COLORS.clear()
     COLORS.update(THEMES.get(theme, THEMES["Light"]))
+
+
+def brand_logo_path(theme):
+    return {
+        "Light": BRAND_LOGO_LIGHT_PATH,
+        "Dark": BRAND_LOGO_DARK_PATH,
+        "AMOLED": BRAND_LOGO_AMOLED_PATH,
+        "Cyberpunk": BRAND_LOGO_CYBERPUNK_PATH,
+    }.get(theme, BRAND_LOGO_LIGHT_PATH)
+
+
+def brand_icon_path(theme):
+    return {
+        "Light": BRAND_ICON_LIGHT_PATH,
+        "Dark": BRAND_ICON_DARK_PATH,
+        "AMOLED": BRAND_ICON_AMOLED_PATH,
+        "Cyberpunk": BRAND_ICON_CYBERPUNK_PATH,
+    }.get(theme, BRAND_ICON_LIGHT_PATH)
 
 
 def load_json(name):
@@ -213,6 +268,35 @@ def check_bundled_files():
         raise FileNotFoundError("Missing bundled files: " + ", ".join(missing))
 
 
+class ThemedScrollbar(Canvas):
+    def __init__(self, master, command):
+        super().__init__(master, width=12, highlightthickness=0, borderwidth=0, background=COLORS["glass"], cursor="hand2")
+        self.command = command
+        self.first = 0.0
+        self.last = 1.0
+        self.thumb = self.create_rectangle(3, 3, 9, 40, fill=COLORS["accent"], outline="")
+        self.bind("<Button-1>", self._jump)
+        self.bind("<B1-Motion>", self._jump)
+        self.bind("<Configure>", lambda _e: self._draw())
+
+    def set(self, first, last):
+        self.first, self.last = float(first), float(last)
+        self._draw()
+
+    def _draw(self):
+        h = max(1, self.winfo_height())
+        top = max(3, int(self.first * h))
+        bottom = min(h - 3, max(top + 24, int(self.last * h)))
+        self.configure(background=COLORS["glass"])
+        self.itemconfigure(self.thumb, fill=COLORS["accent"])
+        self.coords(self.thumb, 3, top, 9, bottom)
+
+    def _jump(self, event):
+        h = max(1, self.winfo_height())
+        span = max(0.05, self.last - self.first)
+        self.command("moveto", max(0, min(1 - span, (event.y / h) - span / 2)))
+
+
 class ScrollFrame(ttk.Frame):
     active = None
 
@@ -220,7 +304,7 @@ class ScrollFrame(ttk.Frame):
         super().__init__(master)
         self.canvas = Canvas(self, borderwidth=0, highlightthickness=0, background=COLORS["panel"])
         self.inner = ttk.Frame(self.canvas, style="Panel.TFrame")
-        self.scroll = ttk.Scrollbar(self, orient=VERTICAL, command=self.canvas.yview)
+        self.scroll = ThemedScrollbar(self, self.canvas.yview)
         self.window = self.canvas.create_window((0, 0), window=self.inner, anchor="nw")
         self.canvas.configure(yscrollcommand=self.scroll.set)
         self.canvas.pack(side=LEFT, fill=BOTH, expand=True)
@@ -284,6 +368,267 @@ class Tooltip:
         if self.tip:
             self.tip.destroy()
             self.tip = None
+
+
+_TTK_BUTTON = ttk.Button
+
+
+def _rounded_rect(canvas, x1, y1, x2, y2, r, **kwargs):
+    points = [
+        x1 + r, y1, x2 - r, y1, x2, y1, x2, y1 + r,
+        x2, y2 - r, x2, y2, x2 - r, y2, x1 + r, y2,
+        x1, y2, x1, y2 - r, x1, y1 + r, x1, y1,
+    ]
+    return canvas.create_polygon(points, smooth=True, splinesteps=12, **kwargs)
+
+
+class RoundedButton(Canvas):
+    def __init__(self, master, text="", command=None, style=None, width=None, state="normal", **kwargs):
+        self.text = text or ""
+        self.command = command
+        self.style_name = style or self._style_from_text(self.text)
+        self.state = state
+        self.hover = False
+        self.down = False
+        self.char_width = width
+        w = max(36, int(width) * 9 if width else max(72, len(self.text) * 8 + 36))
+        super().__init__(master, width=w, height=36, highlightthickness=0, borderwidth=0, background=COLORS["background"], cursor="hand2", **{k: v for k, v in kwargs.items() if k in {"name"}})
+        self.bind("<Configure>", lambda _e: self._draw())
+        self.bind("<Enter>", self._enter)
+        self.bind("<Leave>", self._leave)
+        self.bind("<ButtonPress-1>", self._press)
+        self.bind("<ButtonRelease-1>", self._release)
+        self.bind("<Return>", lambda _e: self.invoke())
+        self.bind("<space>", lambda _e: self.invoke())
+        self._draw()
+
+    @staticmethod
+    def _style_from_text(text):
+        text = text.lower()
+        if any(word in text for word in ("uninstall", "remove", "delete", "reset", "debloat", "clear files", "clear dashboard", "overwrite")):
+            return "Danger.TButton"
+        if any(word in text for word in ("install selected", "upgrade selected", "apply selected", "run selected", "create iso", "move files", "collect data", "save settings", "save path", "search", "confirm", "lookup", "save")):
+            return "Accent.TButton"
+        return "Secondary.TButton"
+
+    def _palette(self):
+        disabled = str(self.state) == "disabled"
+        style = self.style_name or "Secondary.TButton"
+        if disabled:
+            return COLORS["disabled_bg"], COLORS["disabled_text"], COLORS["border"]
+        if style in ("Accent.TButton", "Primary.TButton"):
+            fill = COLORS["primary_pressed"] if self.down else COLORS["primary_hover"] if self.hover else COLORS["primary"]
+            return fill, "#FFFFFF", COLORS["primary"]
+        if style in ("Danger.TButton", "Destructive.TButton"):
+            fill = COLORS["danger_soft"] if self.down else COLORS["danger"]
+            return fill, "#FFFFFF", COLORS["danger"]
+        if style == "DangerOutline.TButton":
+            return COLORS["surface_pressed"] if self.hover else COLORS["surface"], COLORS["danger"], COLORS["danger"]
+        if style == "Nav.TButton":
+            return COLORS["surface_pressed"] if self.hover else COLORS["surface"], COLORS["text"], COLORS["border"]
+        if style in ("Subtle.TButton", "Icon.TButton"):
+            return COLORS["surface_pressed"] if self.hover or self.down else COLORS["background"], COLORS["text"], COLORS["background"]
+        return COLORS["surface_pressed"] if self.hover or self.down else COLORS["surface"], COLORS["text"], COLORS["border"]
+
+    def _draw(self):
+        self.delete("all")
+        fill, fg, border = self._palette()
+        w, h = max(1, self.winfo_width()), max(1, self.winfo_height())
+        bg = COLORS["surface"] if self.style_name not in ("Subtle.TButton",) else COLORS["background"]
+        Canvas.configure(self, background=bg)
+        _rounded_rect(self, 1, 1, w - 1, h - 1, 9, fill=fill, outline=border, width=1)
+        if self.style_name in ("Accent.TButton", "Primary.TButton") and COLORS.get("glow_cyan"):
+            _rounded_rect(self, 2, 2, w - 2, h - 2, 9, fill="", outline=COLORS["primary"], width=1)
+        anchor = "w" if self.style_name == "Nav.TButton" else "center"
+        x = 14 if anchor == "w" else w // 2
+        self.create_text(x, h // 2, text=self.text, fill=fg, anchor=anchor, font=("Segoe UI Variable Text", 10, "bold"))
+
+    def _enter(self, _event=None):
+        self.hover = True
+        self._draw()
+
+    def _leave(self, _event=None):
+        self.hover = self.down = False
+        self._draw()
+
+    def _press(self, _event=None):
+        self.down = True
+        self._draw()
+
+    def _release(self, event=None):
+        was_down = self.down
+        self.down = False
+        self._draw()
+        if was_down and self.command and str(self.state) != "disabled":
+            self.command()
+
+    def invoke(self):
+        if self.command and str(self.state) != "disabled":
+            return self.command()
+
+    def configure(self, cnf=None, **kwargs):
+        opts = {}
+        if cnf:
+            opts.update(cnf)
+        opts.update(kwargs)
+        for key in list(opts):
+            if key == "text":
+                self.text = opts.pop(key) or ""
+            elif key == "command":
+                self.command = opts.pop(key)
+            elif key == "style":
+                self.style_name = opts.pop(key)
+            elif key == "state":
+                self.state = opts.pop(key)
+            elif key in {"foreground", "background"}:
+                opts.pop(key)
+        if opts:
+            super().configure(**opts)
+        self._draw()
+
+    config = configure
+
+    def cget(self, key):
+        if key == "text":
+            return self.text
+        if key == "style":
+            return self.style_name
+        if key == "state":
+            return self.state
+        return super().cget(key)
+
+    def keys(self):
+        return list(super().keys()) + ["text", "style", "state"]
+
+
+ttk.Button = RoundedButton
+
+
+class ToggleSwitch(Canvas):
+    def __init__(self, master, variable, command=None, state="normal"):
+        super().__init__(master, width=48, height=26, highlightthickness=0, borderwidth=0, background=COLORS["surface"], cursor="hand2")
+        self.variable = variable
+        self.command = command
+        self.state = state
+        self.hover = False
+        self.bind("<Button-1>", self._toggle)
+        self.bind("<Enter>", lambda _e: self._set_hover(True))
+        self.bind("<Leave>", lambda _e: self._set_hover(False))
+        self.bind("<Configure>", lambda _e: self._draw())
+        self._draw()
+
+    def _set_hover(self, value):
+        self.hover = value
+        self._draw()
+
+    def _toggle(self, _event=None):
+        if str(self.state) == "disabled":
+            return
+        self.variable.set(not self.variable.get())
+        self._draw()
+        if self.command:
+            self.command()
+
+    def _draw(self):
+        self.delete("all")
+        Canvas.configure(self, background=COLORS["surface"])
+        on = bool(self.variable.get())
+        disabled = str(self.state) == "disabled"
+        track = COLORS["disabled_bg"] if disabled else COLORS["primary"] if on else COLORS["surface_subtle"]
+        border = COLORS["disabled_text"] if disabled else COLORS["primary"] if on else COLORS["border_strong"]
+        knob = COLORS["disabled_text"] if disabled else "#FFFFFF" if on else COLORS["text"]
+        _rounded_rect(self, 1, 3, 47, 23, 12, fill=track, outline=border, width=1)
+        x = 35 if on else 13
+        self.create_oval(x - 8, 5, x + 8, 21, fill=knob, outline="")
+        if self.hover and not disabled:
+            _rounded_rect(self, 1, 3, 47, 23, 12, fill="", outline=COLORS["focus_ring"], width=1)
+
+    def configure(self, cnf=None, **kwargs):
+        opts = {}
+        if cnf:
+            opts.update(cnf)
+        opts.update(kwargs)
+        if "state" in opts:
+            self.state = opts.pop("state")
+        if opts:
+            Canvas.configure(self, **opts)
+        self._draw()
+
+    config = configure
+
+
+BUTTON_STYLES = {
+    "primary": "Primary.TButton",
+    "secondary": "Secondary.TButton",
+    "subtle": "Subtle.TButton",
+    "ghost": "Subtle.TButton",
+    "danger": "Destructive.TButton",
+    "destructive": "Destructive.TButton",
+    "danger_outline": "DangerOutline.TButton",
+    "icon": "Icon.TButton",
+}
+
+
+def ThemedButton(parent, text="", variant="secondary", command=None, **kwargs):
+    return ttk.Button(parent, text=text, command=command, style=BUTTON_STYLES.get(variant, "Secondary.TButton"), **kwargs)
+
+
+def Card(parent, title=None, subtitle=None, variant="outlined", padding=16):
+    frame = ttk.Frame(parent, style=f"Card.{variant.title()}.TFrame", padding=padding)
+    if title:
+        ttk.Label(frame, text=title, style="Section.TLabel").pack(anchor="w")
+    if subtitle:
+        ttk.Label(frame, text=subtitle, style="Muted.Panel.TLabel", wraplength=920).pack(anchor="w", pady=(2, 0))
+    return frame
+
+
+def SectionHeader(parent, title, subtitle=None):
+    frame = ttk.Frame(parent)
+    ttk.Label(frame, text=title, style="Section.TLabel").pack(anchor="w")
+    if subtitle:
+        ttk.Label(frame, text=subtitle, style="Muted.TLabel", wraplength=920).pack(anchor="w", pady=(2, 0))
+    return frame
+
+
+def Badge(parent, text, variant="neutral"):
+    return ttk.Label(parent, text=text, style=f"Badge.{variant.title()}.TLabel")
+
+
+def SearchEntry(parent, textvariable, command=None, width=32):
+    frame = ttk.Frame(parent, style="Search.TFrame", padding=(8, 4))
+    entry = ttk.Entry(frame, textvariable=textvariable, width=width)
+    entry.pack(side=LEFT, fill="x", expand=True)
+    if command:
+        entry.bind("<KeyRelease>", command)
+    return frame, entry
+
+
+def PasswordEntry(parent, variable):
+    frame = ttk.Frame(parent)
+    entry = ttk.Entry(frame, textvariable=variable, show="*")
+    entry.pack(side=LEFT, fill="x", expand=True)
+    shown = BooleanVar(value=False)
+
+    def toggle():
+        shown.set(not shown.get())
+        entry.configure(show="" if shown.get() else "*")
+
+    ThemedButton(frame, text="Show", variant="subtle", command=toggle).pack(side=LEFT, padx=(6, 0))
+    return frame, entry
+
+
+def ConfirmDialog(title, message, severity="warning"):
+    icon = "error" if severity in {"danger", "destructive"} else "warning"
+    return messagebox.askyesno(title, message, icon=icon)
+
+
+class ToastManager:
+    def __init__(self, status_label):
+        self.status_label = status_label
+
+    def show(self, message, variant="info"):
+        self.status_label.configure(text=message, foreground=COLORS.get({"success": "green", "warning": "warning", "danger": "red"}.get(variant, "accent"), COLORS["text"]))
+
 
 class App:
     def __init__(self):
@@ -525,27 +870,92 @@ class App:
 
     def _style(self):
         style = ttk.Style()
-        bg, panel, glass = COLORS["bg"], COLORS["panel"], COLORS["glass"]
-        style.configure(".", background=bg, foreground=COLORS["text"])
+        try:
+            style.theme_use("clam")
+        except Exception:
+            pass
+        bg, panel, glass = COLORS["background"], COLORS["surface"], COLORS["surface_subtle"]
+        elevated = COLORS["surface_elevated"]
+        hover = COLORS.get("hover", glass)
+        pressed = COLORS.get("pressed", hover)
+        disabled_bg = COLORS.get("disabled_bg", glass)
+        disabled_text = COLORS.get("disabled_text", COLORS["muted"])
+        font_scale = int(self.settings.get("font_scale", "100")) / 100 if hasattr(self, "settings") else 1
+        body_size = max(9, int(10 * font_scale))
+        small_size = max(8, int(9 * font_scale))
+        body_font = ("Segoe UI Variable Text", body_size)
+        button_font = ("Segoe UI Variable Text", body_size, "bold")
+        heading_font = ("Segoe UI Variable Display", max(14, int(16 * font_scale)), "bold")
+        style.configure(".", background=bg, foreground=COLORS["text"], font=body_font)
         style.configure("TFrame", background=bg)
-        style.configure("Panel.TFrame", background=panel)
+        style.configure("App.TFrame", background=bg)
+        style.configure("Surface.TFrame", background=panel)
+        style.configure("Panel.TFrame", background=panel, borderwidth=1, relief="solid", bordercolor=COLORS["border"])
         style.configure("PanelInner.TFrame", background=panel)
-        style.configure("TLabel", background=bg, foreground=COLORS["text"])
-        style.configure("Panel.TLabel", background=panel, foreground=COLORS["text"])
-        style.configure("Risk.TLabel", background=panel, foreground=COLORS["red"])
-        style.configure("TCheckbutton", background=panel, foreground=COLORS["text"])
-        style.configure("Panel.TCheckbutton", background=panel, foreground=COLORS["text"])
-        style.configure("Green.TCheckbutton", background=panel, foreground=COLORS["green"])
-        style.configure("Risk.TCheckbutton", background=panel, foreground=COLORS["red"])
+        style.configure("Search.TFrame", background=glass, borderwidth=1, relief="solid", bordercolor=COLORS["border"])
+        style.configure("Card.Outlined.TFrame", background=panel, borderwidth=1, relief="solid", bordercolor=COLORS["border"])
+        style.configure("Card.Elevated.TFrame", background=elevated, borderwidth=1, relief="solid", bordercolor=COLORS["border"])
+        style.configure("Card.Subtle.TFrame", background=glass, borderwidth=1, relief="solid", bordercolor=COLORS["border"])
+        style.configure("Card.Warning.TFrame", background=COLORS["warning_soft"], borderwidth=1, relief="solid", bordercolor=COLORS["warning"])
+        style.configure("Card.Danger.TFrame", background=COLORS["danger_soft"], borderwidth=1, relief="solid", bordercolor=COLORS["danger"])
+        style.configure("TLabel", background=bg, foreground=COLORS["text"], font=body_font)
+        style.configure("Heading.TLabel", background=bg, foreground=COLORS["text"], font=heading_font)
+        style.configure("Section.TLabel", background=panel, foreground=COLORS["text"], font=heading_font)
+        style.configure("Muted.TLabel", background=bg, foreground=COLORS["muted"], font=body_font)
+        style.configure("Panel.TLabel", background=panel, foreground=COLORS["text"], font=body_font)
+        style.configure("Muted.Panel.TLabel", background=panel, foreground=COLORS["muted"], font=("Segoe UI Variable Text", small_size))
+        style.configure("Risk.TLabel", background=panel, foreground=COLORS["red"], font=body_font)
+        for variant, fg, bgc in (
+            ("Primary", "#FFFFFF", COLORS["primary"]),
+            ("Success", COLORS["success"], COLORS["success_soft"]),
+            ("Info", COLORS["primary"], COLORS["primary_soft"]),
+            ("Warning", COLORS["warning"], COLORS["warning_soft"]),
+            ("Danger", COLORS["danger"], COLORS["danger_soft"]),
+            ("Neutral", COLORS["text_muted"], glass),
+        ):
+            style.configure(f"Badge.{variant}.TLabel", background=bgc, foreground=fg, padding=(8, 3), font=("Segoe UI Variable Text", small_size, "bold"))
+        style.configure("TCheckbutton", background=panel, foreground=COLORS["text"], font=body_font)
+        style.configure("Panel.TCheckbutton", background=panel, foreground=COLORS["text"], font=body_font)
+        style.configure("Green.TCheckbutton", background=panel, foreground=COLORS["green"], font=body_font)
+        style.configure("Risk.TCheckbutton", background=panel, foreground=COLORS["red"], font=body_font)
+        style.map("TCheckbutton", background=[("active", hover)], foreground=[("disabled", disabled_text)])
+        style.map("TRadiobutton", background=[("active", hover)], foreground=[("disabled", disabled_text)])
         style.map("Green.TCheckbutton", foreground=[("!disabled", COLORS["green"])])
         style.map("Risk.TCheckbutton", foreground=[("!disabled", COLORS["red"])])
-        style.configure("TEntry", fieldbackground=glass, foreground=COLORS["text"], insertcolor=COLORS["text"])
-        style.configure("TCombobox", fieldbackground=glass, foreground=COLORS["text"], arrowcolor=COLORS["muted"])
-        style.configure("Treeview", background=panel, fieldbackground=panel, foreground=COLORS["text"], bordercolor=COLORS["line"])
-        style.configure("Treeview.Heading", background=glass, foreground=COLORS["text"])
-        style.configure("Visible.Horizontal.TProgressbar", thickness=12, troughcolor=COLORS["line"], background=COLORS["accent"], lightcolor=COLORS["accent"], darkcolor=COLORS["accent"], bordercolor=COLORS["line"])
-        style.configure("Nav.TButton", padding=(10, 6), anchor="w")
-        style.configure("Treeview", rowheight=28)
+        style.configure("TRadiobutton", background=panel, foreground=COLORS["text"], font=body_font)
+        style.configure("TEntry", fieldbackground=glass, foreground=COLORS["text"], insertcolor=COLORS["text"], bordercolor=COLORS["border"], lightcolor=COLORS["border"], darkcolor=COLORS["border"], padding=(8, 6))
+        style.map("TEntry", fieldbackground=[("disabled", disabled_bg), ("focus", panel)], bordercolor=[("focus", COLORS["focus_ring"])], foreground=[("disabled", disabled_text)])
+        style.configure("TCombobox", fieldbackground=glass, foreground=COLORS["text"], arrowcolor=COLORS["muted"], bordercolor=COLORS["border"], lightcolor=COLORS["border"], darkcolor=COLORS["border"], padding=(8, 6))
+        style.map("TCombobox", fieldbackground=[("readonly", glass), ("disabled", disabled_bg)], foreground=[("disabled", disabled_text)], bordercolor=[("focus", COLORS["focus_ring"])])
+        style.configure("TButton", background=panel, foreground=COLORS["text"], bordercolor=COLORS["border"], lightcolor=COLORS["border"], darkcolor=COLORS["border"], focusthickness=1, focuscolor=COLORS["focus_ring"], padding=(14, 8), font=button_font)
+        style.map("TButton", background=[("disabled", disabled_bg), ("pressed", pressed), ("active", hover)], foreground=[("disabled", disabled_text)])
+        for name in ("Accent", "Primary"):
+            style.configure(f"{name}.TButton", background=COLORS["primary"], foreground="#FFFFFF", bordercolor=COLORS["primary"], lightcolor=COLORS["primary"], darkcolor=COLORS["primary"], padding=(14, 8), font=button_font)
+            style.map(f"{name}.TButton", background=[("disabled", disabled_bg), ("pressed", COLORS["primary_pressed"]), ("active", COLORS["primary_hover"])], foreground=[("disabled", disabled_text), ("!disabled", "#FFFFFF")])
+        style.configure("Secondary.TButton", background=panel, foreground=COLORS["text"], bordercolor=COLORS["border"], lightcolor=COLORS["border"], darkcolor=COLORS["border"], padding=(14, 8), font=button_font)
+        style.map("Secondary.TButton", background=[("disabled", disabled_bg), ("pressed", pressed), ("active", hover)], foreground=[("disabled", disabled_text)])
+        style.configure("Subtle.TButton", background=bg, foreground=COLORS["text"], bordercolor=bg, lightcolor=bg, darkcolor=bg, padding=(12, 7), font=button_font)
+        style.map("Subtle.TButton", background=[("disabled", bg), ("pressed", pressed), ("active", hover)], foreground=[("disabled", disabled_text)])
+        for name in ("Danger", "Destructive"):
+            style.configure(f"{name}.TButton", background=COLORS["danger"], foreground="#FFFFFF", bordercolor=COLORS["danger"], lightcolor=COLORS["danger"], darkcolor=COLORS["danger"], padding=(14, 8), font=button_font)
+            style.map(f"{name}.TButton", background=[("disabled", disabled_bg), ("active", COLORS["danger"]), ("pressed", COLORS["danger_soft"])], foreground=[("disabled", disabled_text), ("!disabled", "#FFFFFF")])
+        style.configure("DangerOutline.TButton", background=panel, foreground=COLORS["danger"], bordercolor=COLORS["danger"], lightcolor=COLORS["danger"], darkcolor=COLORS["danger"], padding=(14, 8), font=button_font)
+        style.configure("Icon.TButton", background=panel, foreground=COLORS["text"], bordercolor=COLORS["border"], padding=(8, 6), font=button_font)
+        style.configure("Treeview", background=panel, fieldbackground=panel, foreground=COLORS["text"], bordercolor=COLORS["border"], rowheight=max(30, int(32 * font_scale)), font=body_font)
+        style.configure("Treeview.Heading", background=glass, foreground=COLORS["text"], bordercolor=COLORS["border"], relief="flat", padding=(8, 6), font=("Segoe UI Variable Text", small_size, "bold"))
+        style.map("Treeview", background=[("selected", COLORS["primary_soft"])], foreground=[("selected", COLORS["text"])])
+        style.configure("Visible.Horizontal.TProgressbar", thickness=10, troughcolor=COLORS["border"], background=COLORS["primary"], lightcolor=COLORS["primary"], darkcolor=COLORS["primary"], bordercolor=COLORS["border"])
+        style.configure("Vertical.TScrollbar", background=glass, troughcolor=glass, bordercolor=COLORS["border"], arrowcolor=COLORS["muted"], gripcount=0, width=12)
+        style.map("Vertical.TScrollbar", background=[("active", COLORS["primary"]), ("pressed", pressed)], arrowcolor=[("active", COLORS["text"])])
+        style.configure("Horizontal.TScrollbar", background=glass, troughcolor=glass, bordercolor=COLORS["border"], arrowcolor=COLORS["muted"], gripcount=0, width=12)
+        style.map("Horizontal.TScrollbar", background=[("active", COLORS["primary"]), ("pressed", pressed)], arrowcolor=[("active", COLORS["text"])])
+        style.configure("TNotebook", background=bg, borderwidth=0)
+        style.configure("TNotebook.Tab", background=panel, foreground=COLORS["muted"], padding=(14, 8), borderwidth=1, font=button_font)
+        style.map("TNotebook.Tab", background=[("selected", hover), ("active", glass)], foreground=[("selected", COLORS["text"]), ("active", COLORS["text"])])
+        style.configure("TLabelframe", background=panel, foreground=COLORS["text"], bordercolor=COLORS["border"])
+        style.configure("TLabelframe.Label", background=panel, foreground=COLORS["text"], font=heading_font)
+        style.configure("Nav.TButton", padding=(12, 9), anchor="w", background=panel, foreground=COLORS["text"], bordercolor=COLORS["border"], font=button_font)
+        style.map("Nav.TButton", background=[("active", hover), ("pressed", pressed)], foreground=[("active", COLORS["text"])])
         # Hide notebook tabs — navigation is via the side rail only
         style.layout("Rail.TNotebook.Tab", [])
         style.configure("Green.TCheckbutton", foreground=COLORS["green"])
@@ -557,19 +967,33 @@ class App:
         header_top.pack(fill="x")
         title_box = ttk.Frame(header_top)
         title_box.pack(side=LEFT, fill="x", expand=True)
-        ttk.Label(title_box, text="UsefulWindowsUtils", font=(APP_TITLE_FONT, 36, "bold"), foreground=COLORS["accent"]).pack(anchor="w")
-        ttk.Label(title_box, text="Install apps, tune Windows, inspect security signals. Made by Kuljit Singh.", foreground=COLORS["muted"]).pack(anchor="w")
+        brand = ttk.Frame(title_box)
+        brand.pack(anchor="w")
+        self.brand_logo_label = ttk.Label(brand)
+        self.brand_logo_label.pack(side=LEFT, padx=(0, 14))
+        self.set_brand_logo(self.settings.get("theme", "Light"))
+        copy = ttk.Frame(brand)
+        copy.pack(side=LEFT, fill="x", expand=True)
+        word_row = ttk.Frame(copy)
+        word_row.pack(anchor="w")
+        title_font = ("Segoe UI Variable Display", 28, "bold")
+        self.brand_useful_label = ttk.Label(word_row, text="Useful", font=title_font)
+        self.brand_windows_label = ttk.Label(word_row, text="Windows", font=title_font)
+        self.brand_utils_label = ttk.Label(word_row, text="Utils", font=title_font)
+        self.brand_useful_label.pack(side=LEFT)
+        self.brand_windows_label.pack(side=LEFT)
+        self.brand_utils_label.pack(side=LEFT)
+        self.brand_subtitle_label = ttk.Label(copy, text="Install apps, tune Windows, inspect security signals.", style="Muted.TLabel")
+        self.brand_subtitle_label.pack(anchor="w")
+        self.update_brand_colors(self.settings.get("theme", "Light"))
         search = ttk.Frame(header_top, style="Panel.TFrame", padding=(10, 8))
         search.pack(side=RIGHT, fill="x", padx=(16, 0))
-        search_row = ttk.Frame(search, style="Panel.TFrame")
-        search_row.pack(fill="x")
         self.search_text = StringVar()
-        self.search_entry = ttk.Entry(search_row, textvariable=self.search_text, width=32)
-        self.search_entry.pack(side=LEFT, ipady=4)
-        self.search_entry.bind("<KeyRelease>", self.global_search)
+        search_row, self.search_entry = SearchEntry(search, self.search_text, self.global_search, width=28)
+        search_row.pack(side=LEFT, fill="x", expand=True)
         self.search_entry.bind("<Return>", self.open_selected_search_result)
         self.search_entry.bind("<Escape>", lambda _e: (self.search_text.set(""), self.update_search_results([])))
-        ttk.Button(search_row, text="Search", command=self.global_search).pack(side=LEFT, padx=(8, 0))
+        ThemedButton(search, text="Search", variant="primary", command=self.global_search).pack(side=LEFT, padx=(8, 0))
         self.search_matches = []
         self.search_results = Listbox(self.root, height=5, bg=COLORS["panel"], fg=COLORS["text"], selectbackground=COLORS["accent"], relief="flat")
         self.search_results.bind("<Double-Button-1>", self.open_selected_search_result)
@@ -596,6 +1020,7 @@ class App:
         self._build_nav()
         self._recursive_panel_style(self.root)
         self._repaint_widget_backgrounds(self.root)
+        self._restyle_dynamic_widgets(self.root)
 
         bottom = ttk.Frame(self.root, padding=(12, 8))
         bottom.pack(fill="x", padx=18, pady=(0, 18))
@@ -603,6 +1028,30 @@ class App:
         self.progress.pack(side=LEFT, fill="x", expand=True, padx=(0, 12), ipady=3)
         self.status = ttk.Label(bottom, text="Ready", foreground=COLORS["muted"])
         self.status.pack(side=RIGHT)
+
+    def set_brand_logo(self, theme):
+        if not hasattr(self, "brand_logo_label"):
+            return
+        try:
+            img = PhotoImage(file=str(brand_icon_path(theme)))
+            factor = max(1, img.width() // 64, img.height() // 64)
+            self.brand_logo = img.subsample(factor, factor)
+            self.brand_logo_label.configure(image=self.brand_logo)
+            try:
+                self.root.iconphoto(True, self.brand_logo)
+            except Exception:
+                pass
+        except Exception:
+            self.brand_logo_label.configure(image="")
+
+    def update_brand_colors(self, theme):
+        if hasattr(self, "brand_useful_label"):
+            base = "#0F172A" if theme == "Light" else "#F8FAFC"
+            self.brand_useful_label.configure(foreground=base)
+            self.brand_windows_label.configure(foreground=COLORS["primary"])
+            self.brand_utils_label.configure(foreground=COLORS.get("magenta", base) if theme == "Cyberpunk" else base)
+        if hasattr(self, "brand_subtitle_label"):
+            self.brand_subtitle_label.configure(foreground=COLORS["muted"])
 
     def _recursive_panel_style(self, widget, in_panel=False):
         try:
@@ -636,13 +1085,22 @@ class App:
             bg = COLORS["bg"]
         elif style_name in {"Panel.TFrame", "PanelInner.TFrame"}:
             bg = COLORS["panel"]
+        elif isinstance(widget, RoundedButton):
+            widget._draw()
+            bg = COLORS["panel"]
+        elif isinstance(widget, ToggleSwitch):
+            widget._draw()
+            bg = COLORS["panel"]
+        elif isinstance(widget, ThemedScrollbar):
+            bg = COLORS["glass"]
+            widget._draw()
         elif wtype == "Canvas":
             bg = COLORS["panel"]
             widget.configure(background=bg)
         elif wtype == "Text" and not getattr(widget, "_uwu_logbox", False):
             bg = COLORS["panel"]
         elif wtype == "Listbox":
-            widget.configure(bg=COLORS["panel"], fg=COLORS["text"], selectbackground=COLORS["accent"])
+            widget.configure(bg=COLORS["panel"], fg=COLORS["text"], selectbackground=COLORS["accent"], selectforeground="#FFFFFF", highlightbackground=COLORS["line"], highlightcolor=COLORS["accent"])
         if wtype in {"TLabel", "TCheckbutton", "TRadiobutton"}:
             try:
                 widget.configure(background=parent_bg or COLORS["bg"])
@@ -675,15 +1133,19 @@ class App:
             ttk.Button(self.nav, text=text, style="Nav.TButton", width=24, command=lambda idx=i: self.tabs.select(idx)).pack(fill="x", pady=2)
 
     def _logbox(self, parent, height=8):
-        box = Text(parent, height=height, bg=COLORS["log"], fg=COLORS["log_text"], insertbackground=COLORS["log_text"], relief="flat", padx=10, pady=8)
-        box.configure(font=("Cascadia Mono", 9))
+        box = Text(parent, height=height, bg=COLORS["log"], fg=COLORS["log_text"], insertbackground=COLORS["log_text"], relief="flat", padx=12, pady=10, bd=0, highlightthickness=1, highlightbackground=COLORS["border"], highlightcolor=COLORS["focus_ring"])
+        box.configure(font=("Consolas", 10))
+        box.tag_configure("info", foreground=COLORS["primary"])
+        box.tag_configure("success", foreground=COLORS["success"])
+        box.tag_configure("warning", foreground=COLORS["warning"])
+        box.tag_configure("danger", foreground=COLORS["danger"])
         box._uwu_logbox = True
         return box
 
     def _log_tools(self, parent, box):
         row = ttk.Frame(parent, style="Panel.TFrame")
         row.pack(fill="x", pady=(0, 4), before=box)
-        ttk.Button(row, text="Export Log", command=lambda: self.export_log(box)).pack(side=RIGHT)
+        ThemedButton(row, text="Export Log", variant="secondary", command=lambda: self.export_log(box)).pack(side=RIGHT)
 
     def export_log(self, box):
         text = box.get("1.0", END).strip()
@@ -784,13 +1246,13 @@ class App:
         self.status.configure(text=(title + (" - " + detail if detail else ""))[:180])
 
     def _hero_banner(self, parent, icon, title, subtitle):
-        banner = ttk.Frame(parent)
-        banner.pack(fill="x", pady=(0, 20))
-        ttk.Label(banner, text=icon, font=("Segoe UI Emoji", 48)).pack(side=LEFT, padx=(10, 20))
-        text_frame = ttk.Frame(banner)
+        banner = ttk.Frame(parent, style="Panel.TFrame", padding=16)
+        banner.pack(fill="x", pady=(0, 16), padx=10)
+        ttk.Label(banner, text=icon, font=("Segoe UI Emoji", 34), style="Panel.TLabel").pack(side=LEFT, padx=(2, 16))
+        text_frame = ttk.Frame(banner, style="PanelInner.TFrame")
         text_frame.pack(side=LEFT, fill="both", expand=True)
-        ttk.Label(text_frame, text=title, font=("Segoe UI", 18, "bold")).pack(anchor="w")
-        ttk.Label(text_frame, text=subtitle, foreground=COLORS["muted"], font=("Segoe UI", 11)).pack(anchor="w")
+        ttk.Label(text_frame, text=title, font=("Segoe UI Variable Display", 18, "bold"), style="Panel.TLabel").pack(anchor="w")
+        ttk.Label(text_frame, text=subtitle, foreground=COLORS["muted"], font=("Segoe UI Variable Text", 10)).pack(anchor="w")
         return banner
 
     def _apps_tab(self):
@@ -860,7 +1322,7 @@ class App:
         actions.pack(side=RIGHT, padx=12)
         ttk.Button(actions, text="↻ Upgrade All", command=lambda: self.thread("Upgrade all", self.run_cmd, ["winget", "upgrade", "--all", "--silent", "--accept-source-agreements", "--accept-package-agreements"], self.installed_log)).pack(side=LEFT, padx=4)
         ttk.Button(actions, text="↻ Upgrade Selected", style="Accent.TButton", command=self.upgrade_installed).pack(side=LEFT, padx=4)
-        ttk.Button(actions, text="⌫ Uninstall Selected", command=self.uninstall_installed).pack(side=LEFT, padx=4)
+        ttk.Button(actions, text="⌫ Uninstall Selected", style="Danger.TButton", command=self.uninstall_installed).pack(side=LEFT, padx=4)
 
         installed_book = ttk.Notebook(tab)
         installed_book.pack(fill=BOTH, expand=True, padx=10)
@@ -893,8 +1355,8 @@ class App:
         ttk.Label(top, text="Win11Debloat + CTT Debloat", font=("Segoe UI", 12, "bold")).pack(side=LEFT, padx=12)
         ttk.Button(top, text="Select Recommended", command=self.select_recommended_debloat).pack(side=RIGHT, padx=(4, 12))
         ttk.Button(top, text="Clear", command=self.clear_debloat_apps).pack(side=RIGHT, padx=4)
-        ttk.Button(top, text="Run CTT Debloat", command=self.run_ctt_debloat).pack(side=RIGHT, padx=4)
-        ttk.Button(top, text="Remove Selected", style="Accent.TButton", command=self.remove_selected_debloat).pack(side=RIGHT, padx=4)
+        ttk.Button(top, text="Run CTT Debloat", style="Danger.TButton", command=self.run_ctt_debloat).pack(side=RIGHT, padx=4)
+        ttk.Button(top, text="Remove Selected", style="Danger.TButton", command=self.remove_selected_debloat).pack(side=RIGHT, padx=4)
 
         vsplit = ttk.PanedWindow(tab, orient="vertical")
         vsplit.pack(fill=BOTH, expand=True)
@@ -992,7 +1454,7 @@ class App:
                         return
                     self.thread(t["name"], self.apply_tweak, t, v.get(), self.tweak_log, False)
                 
-                switch = ttk.Checkbutton(row, style="Switch.TCheckbutton", variable=var, command=make_toggle_cmd)
+                switch = ToggleSwitch(row, variable=var, command=make_toggle_cmd)
                 switch.pack(side=RIGHT, padx=(8, 0))
                 self.toggle_widgets.append(switch)
                 Tooltip(switch, tw["desc"])
@@ -1345,7 +1807,7 @@ class App:
         self.fm_overwrite, self.fm_case, self.fm_partial, self.fm_dry = BooleanVar(), BooleanVar(), BooleanVar(), BooleanVar()
         for var, text in [(self.fm_overwrite, "Overwrite"), (self.fm_case, "Case sensitive"), (self.fm_partial, "Partial match"), (self.fm_dry, "Dry run")]:
             ttk.Checkbutton(opts, text=text, variable=var).pack(side=LEFT, padx=6)
-        ttk.Button(opts, text="Clear Files", command=self.fm_clear_files).pack(side=RIGHT, padx=4)
+        ttk.Button(opts, text="Clear Files", style="Danger.TButton", command=self.fm_clear_files).pack(side=RIGHT, padx=4)
         ttk.Button(opts, text="Move Files", style="Accent.TButton", command=self.file_mover_run).pack(side=RIGHT, padx=4)
         
         log_pane = ttk.Frame(vsplit)
@@ -1581,6 +2043,9 @@ class App:
         self._recursive_panel_style(self.root)
         self._repaint_widget_backgrounds(self.root)
         self._repaint_ttk_foregrounds(self.root, old_colors)
+        self.set_brand_logo(theme)
+        self.update_brand_colors(theme)
+        self._restyle_dynamic_widgets(self.root)
 
 
         # Update only Text widgets (tk, not ttk) — sv_ttk handles everything else
@@ -1607,12 +2072,39 @@ class App:
         for child in widget.winfo_children():
             self._repaint_ttk_foregrounds(child, old_colors)
 
+    def _restyle_dynamic_widgets(self, widget):
+        try:
+            wtype = widget.winfo_class()
+            current_style = widget.cget("style") if "style" in widget.keys() else ""
+            text = str(widget.cget("text") if "text" in widget.keys() else "").lower()
+            if (wtype == "TButton" or isinstance(widget, RoundedButton)) and current_style != "Nav.TButton":
+                danger_words = ("uninstall", "remove", "delete", "reset", "debloat", "clear files", "clear dashboard", "overwrite")
+                primary_words = ("install selected", "upgrade selected", "apply selected", "run selected", "create iso", "move files", "collect data", "save settings", "save path", "search", "confirm", "lookup")
+                if any(word in text for word in danger_words):
+                    widget.configure(style="Danger.TButton")
+                elif current_style == "Accent.TButton" or any(word in text for word in primary_words):
+                    widget.configure(style="Accent.TButton")
+                elif isinstance(widget, RoundedButton):
+                    widget._draw()
+            elif wtype == "TScrollbar":
+                widget.configure(style=("Vertical.TScrollbar" if widget.cget("orient") == "vertical" else "Horizontal.TScrollbar"))
+        except Exception:
+            pass
+        for child in widget.winfo_children():
+            self._restyle_dynamic_widgets(child)
+
     def _repaint_text_widgets(self, widget):
         if isinstance(widget, Text):
             if getattr(widget, "_uwu_logbox", False):
-                widget.configure(bg=COLORS["log"], fg=COLORS["log_text"], insertbackground=COLORS["log_text"])
+                widget.configure(bg=COLORS["log"], fg=COLORS["log_text"], insertbackground=COLORS["log_text"], highlightbackground=COLORS["line"], highlightcolor=COLORS["accent"])
             else:
-                widget.configure(bg=COLORS["panel"], fg=COLORS["text"], insertbackground=COLORS["text"])
+                widget.configure(bg=COLORS["panel"], fg=COLORS["text"], insertbackground=COLORS["text"], highlightbackground=COLORS["line"], highlightcolor=COLORS["accent"])
+        elif isinstance(widget, RoundedButton):
+            widget._draw()
+        elif isinstance(widget, ToggleSwitch):
+            widget._draw()
+        elif isinstance(widget, ThemedScrollbar):
+            widget._draw()
         elif isinstance(widget, Canvas):
             widget.configure(background=COLORS["panel"])
         for child in widget.winfo_children():
@@ -3478,6 +3970,10 @@ if (-not $packages -and -not $provisioned) {{
 
 def self_test():
     check_bundled_files()
+    assert brand_logo_path("Light").name == "logo_light.png"
+    assert brand_logo_path("Dark").name == "logo_dark.png"
+    assert brand_logo_path("AMOLED").name == "logo_amoled.png"
+    assert brand_logo_path("Cyberpunk").name == "logo_cyberpunk.png"
     def contrast(fg, bg):
         def lum(color):
             h = color.lstrip("#")
