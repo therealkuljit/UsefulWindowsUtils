@@ -1608,6 +1608,7 @@ class App:
         self.winget_search_text = StringVar()
         ttk.Entry(custom, textvariable=self.winget_search_text, width=24).pack(side=LEFT, padx=(0, 4))
         ttk.Button(custom, text="Search Winget/Choco", command=self.install_winget_search).pack(side=LEFT)
+        ttk.Button(custom, text="Install Winget/Choco", command=self.install_package_managers).pack(side=LEFT, padx=(4, 0))
 
         actions = ttk.Frame(top)
         actions.pack(side=RIGHT, padx=12)
@@ -1659,7 +1660,7 @@ class App:
         section_row.pack(side=LEFT, padx=8)
         self.installed_sections = {}
         self.installed_section_buttons = {}
-        for name in ("Installer", "Debloater"):
+        for name in ("Uninstaller", "Debloater"):
             btn = ttk.Button(section_row, text=name, style="Secondary.TButton", width=14, command=lambda n=name: self.show_installed_section(n))
             btn.pack(side=LEFT, padx=4)
             self.installed_section_buttons[name] = btn
@@ -1674,7 +1675,7 @@ class App:
         content.pack(fill=BOTH, expand=True, padx=10)
         apps_tab = ttk.Frame(content, padding=8)
         debloat_tab = ttk.Frame(content, padding=8)
-        self.installed_sections["Installer"] = apps_tab
+        self.installed_sections["Uninstaller"] = apps_tab
         self.installed_sections["Debloater"] = debloat_tab
         self._debloater_section(debloat_tab)
 
@@ -1696,7 +1697,7 @@ class App:
         self.installed_log = self._logbox(log_pane)
         self.installed_log.pack(fill=BOTH, expand=True)
         self._log_tools(log_pane, self.installed_log)
-        self.show_installed_section("Installer")
+        self.show_installed_section("Uninstaller")
         self.root.after(1200, self.refresh_installed)
 
     def show_installed_section(self, name):
@@ -2616,6 +2617,31 @@ function Invoke-WinUtilClearStartPins {{ $template = Join-Path $env:UWU_PY_ROOT 
             self.log(self.apps_log, "WARN enter an app name or package ID.")
             return
         self.thread("App search install", self.install_winget_search_worker, query, self.apps_log)
+
+    def install_package_managers(self):
+        if messagebox.askyesno("Install package managers", "Install or repair Winget and Chocolatey?"):
+            self.thread("Install package managers", self.install_package_managers_worker, self.apps_log)
+
+    def install_package_managers_worker(self, box):
+        script = r"""
+if (-not (Get-Command winget -ErrorAction SilentlyContinue)) {
+  Write-Host "Installing Winget..."
+  $pkg = Join-Path $env:TEMP 'Microsoft.DesktopAppInstaller.msixbundle'
+  Invoke-WebRequest -Uri 'https://aka.ms/getwinget' -OutFile $pkg
+  Add-AppxPackage -Path $pkg
+} else {
+  Write-Host "Winget is already installed."
+}
+if (-not (Get-Command choco -ErrorAction SilentlyContinue)) {
+  Write-Host "Installing Chocolatey..."
+  Set-ExecutionPolicy Bypass -Scope Process -Force
+  [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072
+  Invoke-Expression ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
+} else {
+  Write-Host "Chocolatey is already installed."
+}
+"""
+        self.run_ps_block(script, box)
 
     @staticmethod
     def parse_winget_search(output):
@@ -4410,6 +4436,7 @@ def self_test():
     apps.tweaks = App.load_tweaks(apps)
     apps.debloat_apps = App.load_debloat_apps(apps)
     assert apps.apps and apps.tweaks and apps.debloat_apps
+    assert callable(getattr(App, "install_package_managers", None))
     assert len({a["winget"].lower() for a in apps.apps if a["winget"]}) == len([a for a in apps.apps if a["winget"]])
     assert any(t["name"] == "Disk Cleanup - Run" for t in apps.tweaks)
     assert any(t["name"] == "Start Menu Pinned Apps - Clear" for t in apps.tweaks)

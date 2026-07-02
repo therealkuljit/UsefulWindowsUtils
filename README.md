@@ -4,6 +4,41 @@ UsefulWindowsUtils is a comprehensive Windows utility application that combines 
 
 Current version: **1.0.1**
 
+## First-Time Setup From GitHub
+
+1. Install **Python 3** from [python.org](https://www.python.org/downloads/windows/) or the Microsoft Store.
+2. Download the project:
+   - Git users:
+     ```powershell
+     git clone https://github.com/<your-username>/UsefulWindowsUtils.git
+     cd UsefulWindowsUtils
+     ```
+   - Non-Git users: open the GitHub repo, click **Code > Download ZIP**, extract it, then open PowerShell in the extracted folder.
+3. Start the app:
+   ```powershell
+   python app.py
+   ```
+4. For system tweaks, debloating, PATH changes, Windows Features, Defender actions, ISO work, or app uninstall operations, run PowerShell **as Administrator** before launching:
+   ```powershell
+   cd path\to\UsefulWindowsUtils
+   python app.py
+   ```
+5. In the App Store tab, use **Install Winget/Choco** if the machine does not already have Winget or Chocolatey ready.
+
+No `pip install` step is required for the core desktop app.
+
+---
+
+## Project Highlights
+
+- **265 bundled app entries** across **21 major categories**.
+- **140 debloater entries** for removable Windows inbox/provisioned apps.
+- **Major app categories:** AI & Design, AI Tools, Browsers, Business & Finance, Business & Productivity, Communications, Creative Tools, Customization, Development, Downloads, Games, IT & DevOps, Malware Analysis, Microsoft Tools, Multimedia Tools, Pro Tools, Productivity, SOC & Detection, Security, Selfhosted Tools, and Utilities.
+- **Security tools:** Defender panel, VirusTotal lookups/uploads, C2 IP/hash intelligence collection, C2 report export, process export, TCP connection review, SHA256 hashing, and folder hash manifests.
+- **System cleanup tools:** Windows debloater, batch app uninstaller, Windows tweaks, Windows Features/fixes, PATH manager, ISO toolset, and mass file mover.
+
+---
+
 The application is intentionally designed to be dependency-light, relying on the Python standard library, Tkinter, native Windows tools, package-manager CLIs, and configured threat-intelligence APIs.
 
 ---
@@ -24,7 +59,9 @@ For more information, please see `DISCLAIMER.md`, `PRIVACY.md`, `SECURITY.md`, a
 ## 🚀 Key Features
 
 ### 📦 App Store (Package Manager UI)
-- **Multi-Source Installation:** Seamlessly install or upgrade selected Windows applications using integrated **Winget** and **Chocolatey** package-manager backends based on `config/applications.json`.
+- **Bundled Catalog:** Includes **265 app entries** across **21 categories**, sourced from `config/applications.json` plus built-in additions.
+- **Multi-Source Installation:** Seamlessly install or upgrade selected Windows applications using integrated **Winget** and **Chocolatey** package-manager backends.
+- **Package Manager Bootstrap:** Install or repair Winget and Chocolatey directly from the App Store toolbar.
 - **Intelligent Search:** Query Winget and Chocolatey directly by application name or package ID to locate and install the best match.
 - **Visual Indicators:** Open-source applications are highlighted in green for clear licensing visibility.
 - **Convenience Controls:** Includes preset recommendations, "Select All", "Clear Selection", and a live compilation log.
@@ -35,7 +72,7 @@ For more information, please see `DISCLAIMER.md`, `PRIVACY.md`, `SECURITY.md`, a
 - **Registry Inventory:** Scans and lists all installed desktop applications extracted from Windows uninstall registry keys.
 - **Auto-Loading Inventory:** Installed apps load automatically on startup; use `Refresh` to rescan.
 - **Multi-Select Uninstall:** Select installed apps with the tick column or by clicking an app row, then uninstall multiple apps in one action.
-- **Debloater:** Bundles a Win11Debloat app catalog and ChrisTitusTech app-removal action under the Installed tab with fixed rounded Installer/Debloater section controls.
+- **Windows Debloater:** Bundles **140 removable app entries**, Win11Debloat-style app removal, and ChrisTitusTech app-removal actions under the Installed tab.
 - **Package Management:** Perform targeted upgrades, bulk upgrades (`Upgrade All`), or trigger uninstalls utilizing Winget.
 - **Smart Elevation Bypass:** Automatically retries user-scope Winget uninstalls without elevation if administrative mode blocks software removal.
 - **Live Output:** Offers full real-time console logging for all execution blocks.
@@ -105,7 +142,7 @@ Allows direct management and troubleshooting of native operating system componen
 - Shortened app branding to `UsefulWindowsUtils` across the app and docs.
 - Added modern theme-aware canvas controls for buttons, tick boxes, radio buttons, toggles, progress bars, scrollbars, and search fields.
 - Added multi-select uninstall in Installed Apps.
-- Added fixed Installer/Debloater section controls under Installed.
+- Added fixed Uninstaller/Debloater section controls under Installed.
 - Improved C2 Collector layout so logs stay visible.
 - Improved live language switching for navigation and primary app actions.
 - Removed obsolete runtime image-control assets and the old bundled font.
@@ -123,7 +160,4 @@ Allows direct management and troubleshooting of native operating system componen
 
 ## 🛠️ Usage
 
-1. Open a PowerShell terminal as an Administrator.
-2. Launch the utility main interface:
-   ```powershell
-   python app.py
+See **First-Time Setup From GitHub** above for download and launch steps. Run from an Administrator PowerShell session when using system-level tools.
