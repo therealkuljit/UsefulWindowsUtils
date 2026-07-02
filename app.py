@@ -1030,6 +1030,10 @@ class App:
         self.root.after(100, self._drain)
         self.apply_theme(self.settings.get("theme", "Light"), force=True)
         self.root.deiconify()  # show window now that UI is ready
+        try:
+            self.root.state("zoomed")
+        except Exception:
+            pass
 
     def _(self, text):
         lang = self.settings.get("language", "English")
@@ -1598,26 +1602,29 @@ class App:
         
         top = ttk.Frame(tab, style="Panel.TFrame")
         top.pack(fill="x", pady=(0, 12), padx=10, ipady=6)
-        ttk.Button(top, text="✓ Recommended", command=self.select_recommended).pack(side=LEFT, padx=(12, 4))
-        ttk.Button(top, text="+ All", command=lambda: self.set_app_checks(True)).pack(side=LEFT, padx=4)
-        ttk.Button(top, text="× Clear", command=lambda: self.set_app_checks(False)).pack(side=LEFT, padx=4)
-        ttk.Label(top, text="Open-source apps are highlighted in green.", foreground=COLORS["green"]).pack(side=LEFT, padx=16)
-        
-        custom = ttk.Frame(top)
-        custom.pack(side=LEFT, fill="x", expand=True, padx=(8, 0))
-        self.winget_search_text = StringVar()
-        ttk.Entry(custom, textvariable=self.winget_search_text, width=24).pack(side=LEFT, padx=(0, 4))
-        ttk.Button(custom, text="Search Winget/Choco", command=self.install_winget_search).pack(side=LEFT)
-        ttk.Button(custom, text="Install Winget/Choco", command=self.install_package_managers).pack(side=LEFT, padx=(4, 0))
 
-        actions = ttk.Frame(top)
-        actions.pack(side=RIGHT, padx=12)
+        toolbar = ttk.Frame(top, style="PanelInner.TFrame")
+        toolbar.pack(fill="x", padx=12, pady=(6, 4))
+        ttk.Button(toolbar, text="+ All", command=lambda: self.set_app_checks(True)).pack(side=LEFT, padx=(0, 4))
+        ttk.Button(toolbar, text="× Clear", command=lambda: self.set_app_checks(False)).pack(side=LEFT, padx=4)
+        ttk.Button(toolbar, text="Install Winget/Choco", command=self.install_package_managers).pack(side=LEFT, padx=4)
+        ttk.Label(toolbar, text="Open-source apps are highlighted in green.", foreground=COLORS["green"]).pack(side=LEFT, padx=16)
+
+        actions = ttk.Frame(toolbar, style="PanelInner.TFrame")
+        actions.pack(side=RIGHT)
         self.install_selected_button = ttk.Button(actions, text="⬇ " + self._("Install Selected"), style="Accent.TButton", command=lambda: self.package_selected("install"))
         self.install_selected_button.pack(side=RIGHT, padx=4)
         self.upgrade_selected_button = ttk.Button(actions, text="↻ " + self._("Upgrade Selected"), command=lambda: self.package_selected("upgrade"))
         self.upgrade_selected_button.pack(side=RIGHT, padx=4)
         self.mode = StringVar(value=self.settings.get("package_mode", "Winget then Chocolatey"))
         ttk.Combobox(actions, textvariable=self.mode, values=["Winget then Chocolatey", "Winget only", "Chocolatey only"], state="readonly", width=24).pack(side=RIGHT, padx=8)
+
+        custom = ttk.Frame(top, style="PanelInner.TFrame")
+        custom.pack(fill="x", padx=12, pady=(4, 8))
+        ttk.Label(custom, text="Find apps not shown below:", foreground=COLORS["muted"]).pack(side=LEFT, padx=(0, 8))
+        self.winget_search_text = StringVar()
+        ttk.Entry(custom, textvariable=self.winget_search_text, width=34).pack(side=LEFT, fill="x", expand=True, padx=(0, 6))
+        ttk.Button(custom, text="Search Winget/Choco", command=self.install_winget_search).pack(side=LEFT)
 
         vsplit = ttk.PanedWindow(tab, orient="vertical")
         vsplit.pack(fill=BOTH, expand=True, padx=10)
@@ -2705,24 +2712,65 @@ if (-not (Get-Command choco -ErrorAction SilentlyContinue)) {
         if not rows:
             self.log(box, f"No Winget or Chocolatey results found for: {query}")
             return
-        q = query.lower()
-        choice = next((r for r in rows if r["id"].lower() == q or r["name"].lower() == q), rows[0])
-        self.log(box, "Package matches:")
-        for r in rows[:10]:
-            marker = "selected" if r is choice else "match"
-            self.log(box, f"  {marker}: [{r['provider']}] {r['name']}  id={r['id']}  version={r.get('version') or 'unknown'}")
-        if choice["provider"] == "choco":
-            self.run_cmd(["choco", "install", choice["id"], "-y"], box)
-            return
-        cmd = ["winget", "install", "-e", "--id", choice["id"], "--silent", "--accept-source-agreements", "--accept-package-agreements"]
-        if choice["source"].lower() in {"winget", "msstore"}:
-            cmd += ["--source", choice["source"]]
-        self.run_cmd(cmd, box)
+        self.log(box, f"Found {len(rows)} package matches. Choose one or more to install.")
+        self.root.after(0, lambda: self.show_package_search_picker(query, rows[:40], box))
 
-    def select_recommended(self):
-        names = {"Mozilla Firefox", "VLC (Video Player)", "Git", "NodeJS LTS", "Python3", "Notepad++", "VS Codium", "7-Zip"}
-        for app in self.apps:
-            self.app_vars[app["key"]].set(app["name"] in names)
+    def show_package_search_picker(self, query, rows, box):
+        win = Toplevel(self.root)
+        win.title(f"Choose apps - {query}")
+        win.configure(bg=COLORS["background"])
+        win.transient(self.root)
+        win.minsize(720, 500)
+        panel = ttk.Frame(win, style="Panel.TFrame", padding=14)
+        panel.pack(fill=BOTH, expand=True, padx=12, pady=12)
+        ttk.Label(panel, text=f"Search results for \"{query}\"", font=("Segoe UI Variable Display", 16, "bold"), style="Panel.TLabel").pack(anchor="w")
+        ttk.Label(panel, text="Pick the apps you want. The smaller text shows the source and package ID for clarity.", foreground=COLORS["muted"]).pack(anchor="w", pady=(2, 10))
+        sf = ScrollFrame(panel)
+        sf.pack(fill=BOTH, expand=True)
+        vars_by_row = []
+        q = query.lower()
+        for row in rows:
+            var = BooleanVar(value=row["id"].lower() == q or row["name"].lower() == q)
+            vars_by_row.append((var, row))
+            item = ttk.Frame(sf.inner, style="Panel.TFrame", padding=(10, 8))
+            item.pack(fill="x", padx=4, pady=4)
+            source = "Winget" if row["provider"] == "winget" else "Chocolatey"
+            ttk.Checkbutton(item, text=f"Install {row['name']}", variable=var).pack(anchor="w")
+            ttk.Label(item, text=f"Source: {source}  |  Version: {row.get('version') or 'latest'}  |  Package ID: {row['id']}", foreground=COLORS["muted"]).pack(anchor="w", padx=(32, 0), pady=(2, 0))
+        actions = ttk.Frame(panel, style="PanelInner.TFrame")
+        actions.pack(fill="x", pady=(12, 0))
+        ttk.Button(actions, text="Select All", style="Secondary.TButton", command=lambda: [var.set(True) for var, _row in vars_by_row]).pack(side=LEFT, padx=4)
+        ttk.Button(actions, text="Clear", style="Secondary.TButton", command=lambda: [var.set(False) for var, _row in vars_by_row]).pack(side=LEFT, padx=4)
+        ttk.Button(actions, text="Cancel", style="Secondary.TButton", command=win.destroy).pack(side=RIGHT, padx=4)
+        ttk.Button(actions, text="Install Selected", style="Accent.TButton", command=lambda: self.install_picked_search_rows(win, vars_by_row, box)).pack(side=RIGHT, padx=4)
+        win.update_idletasks()
+        w, h = 780, 560
+        x = self.root.winfo_rootx() + max(0, (self.root.winfo_width() - w) // 2)
+        y = self.root.winfo_rooty() + max(0, (self.root.winfo_height() - h) // 2)
+        win.geometry(f"{w}x{h}+{x}+{y}")
+        win.grab_set()
+
+    def install_picked_search_rows(self, win, vars_by_row, box):
+        rows = [row for var, row in vars_by_row if var.get()]
+        if not rows:
+            self.log(box, "WARN Select at least one package match.")
+            return
+        win.destroy()
+        self.thread("Install searched packages", self.install_search_rows_worker, rows, box)
+
+    def install_search_rows_worker(self, rows, box):
+        for i, row in enumerate(rows, 1):
+            self.set_progress(i - 1, len(rows))
+            self.log(box, f"Installing search match {i}/{len(rows)}: [{row['provider']}] {row['name']}")
+            if row["provider"] == "choco":
+                self.run_cmd(["choco", "install", row["id"], "-y"], box)
+                self.set_progress(i, len(rows))
+                continue
+            cmd = ["winget", "install", "-e", "--id", row["id"], "--silent", "--accept-source-agreements", "--accept-package-agreements"]
+            if row.get("source", "").lower() in {"winget", "msstore"}:
+                cmd += ["--source", row["source"]]
+            self.run_cmd(cmd, box)
+            self.set_progress(i, len(rows))
 
     def set_app_checks(self, value):
         for var in self.app_vars.values():

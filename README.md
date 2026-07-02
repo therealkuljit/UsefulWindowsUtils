@@ -12,7 +12,7 @@ Current version: **1.0.1**
 - **Package Manager Bootstrap:** Install or repair Winget and Chocolatey directly from the App Store toolbar.
 - **Intelligent Search:** Query Winget and Chocolatey directly by application name or package ID to locate and install the best match.
 - **Visual Indicators:** Open-source applications are highlighted in green for clear licensing visibility.
-- **Convenience Controls:** Includes preset recommendations, "Select All", "Clear Selection", and a live compilation log.
+- **Convenience Controls:** Includes "Select All", "Clear Selection", package-manager bootstrap, and a live compilation log.
 - **Portable App Support:** Displays download and extraction progress indicators for portable ZIP-based utilities.
 - **Supported Categories:** Browsers, Communications, Customization, Development, Downloads, Games, Microsoft Tools, Multimedia Tools, Pro Tools, Productivity, Security, SOC & Detection, Malware Analysis, AI & Design, AI Tools, Business & Finance, Business & Productivity, Creative Tools, IT & DevOps, Selfhosted Tools, and Utilities.
 
