@@ -43,19 +43,6 @@ The application is intentionally designed to be dependency-light, relying on the
 
 ---
 
-## ⚠️ Important Safety Notice
-
-This utility is a powerful system administration tool capable of modifying system settings, registry keys, Windows services, installed software, Windows optional features, system PATH entries, and ISO contents.
-
-- **Environment:** Run this tool only on systems you own or have explicit administrative authorization to manage.
-- **Safety Best Practices:** Always create a system restore point and comprehensive backups before applying system tweaks or performance optimizations.
-- **Liability:** This software is provided "as is" without warranty of any kind. The authors and contributors are not responsible for any data loss, system downtime, broken installations, unexpected API credit consumption, security exposure, or policy violations.
-- **Defensive Research Only:** Threat intelligence and VirusTotal integration features are built strictly for defensive research, triage, and security analysis. The application queries provider APIs securely and never establishes direct connections to suspicious or malicious infrastructure.
-
-For more information, please see `DISCLAIMER.md`, `PRIVACY.md`, `SECURITY.md`, and `docs/COMPLIANCE.md`.
-
----
-
 ## 🚀 Key Features
 
 ### 📦 App Store (Package Manager UI)
@@ -161,3 +148,16 @@ Allows direct management and troubleshooting of native operating system componen
 ## 🛠️ Usage
 
 See **First-Time Setup From GitHub** above for download and launch steps. Run from an Administrator PowerShell session when using system-level tools.
+
+## ⚠️ Important Safety Notice
+
+This utility is a powerful system administration tool capable of modifying system settings, registry keys, Windows services, installed software, Windows optional features, system PATH entries, and ISO contents.
+
+- **Environment:** Run this tool only on systems you own or have explicit administrative authorization to manage.
+- **Safety Best Practices:** Always create a system restore point and comprehensive backups before applying system tweaks or performance optimizations.
+- **Liability:** This software is provided "as is" without warranty of any kind. The authors and contributors are not responsible for any data loss, system downtime, broken installations, unexpected API credit consumption, security exposure, or policy violations.
+- **Defensive Research Only:** Threat intelligence and VirusTotal integration features are built strictly for defensive research, triage, and security analysis. The application queries provider APIs securely and never establishes direct connections to suspicious or malicious infrastructure.
+
+For more information, please see `DISCLAIMER.md`, `PRIVACY.md`, `SECURITY.md`, and `docs/COMPLIANCE.md`.
+
+---
