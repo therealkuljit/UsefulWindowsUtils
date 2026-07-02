@@ -4,45 +4,6 @@ UsefulWindowsUtils is a comprehensive Windows utility application that combines 
 
 Current version: **1.0.1**
 
-## First-Time Setup From GitHub
-
-1. Install **Python 3** from [python.org](https://www.python.org/downloads/windows/) or the Microsoft Store.
-2. Download the project:
-   - Git users:
-     ```powershell
-     git clone https://github.com/<your-username>/UsefulWindowsUtils.git
-     cd UsefulWindowsUtils
-     ```
-   - Non-Git users: open the GitHub repo, click **Code > Download ZIP**, extract it, then open PowerShell in the extracted folder.
-3. Start the app:
-   ```powershell
-   python app.py
-   ```
-4. For system tweaks, debloating, PATH changes, Windows Features, Defender actions, ISO work, or app uninstall operations, run PowerShell **as Administrator** before launching:
-   ```powershell
-   cd path\to\UsefulWindowsUtils
-   python app.py
-   ```
-5. In the App Store tab, use **Install Winget/Choco** if the machine does not already have Winget or Chocolatey ready.
-
-No `pip install` step is required for the core desktop app.
-
----
-
-## Project Highlights
-
-- **265 bundled app entries** across **21 major categories**.
-- **140 debloater entries** for removable Windows inbox/provisioned apps.
-- **Major app categories:** AI & Design, AI Tools, Browsers, Business & Finance, Business & Productivity, Communications, Creative Tools, Customization, Development, Downloads, Games, IT & DevOps, Malware Analysis, Microsoft Tools, Multimedia Tools, Pro Tools, Productivity, SOC & Detection, Security, Selfhosted Tools, and Utilities.
-- **Security tools:** Defender panel, VirusTotal lookups/uploads, C2 IP/hash intelligence collection, C2 report export, process export, TCP connection review, SHA256 hashing, and folder hash manifests.
-- **System cleanup tools:** Windows debloater, batch app uninstaller, Windows tweaks, Windows Features/fixes, PATH manager, ISO toolset, and mass file mover.
-
----
-
-The application is intentionally designed to be dependency-light, relying on the Python standard library, Tkinter, native Windows tools, package-manager CLIs, and configured threat-intelligence APIs.
-
----
-
 ## 🚀 Key Features
 
 ### 📦 App Store (Package Manager UI)
@@ -148,6 +109,45 @@ Allows direct management and troubleshooting of native operating system componen
 ## 🛠️ Usage
 
 See **First-Time Setup From GitHub** above for download and launch steps. Run from an Administrator PowerShell session when using system-level tools.
+
+## First-Time Setup From GitHub
+
+1. Install **Python 3** from [python.org](https://www.python.org/downloads/windows/) or the Microsoft Store.
+2. Download the project:
+   - Git users:
+     ```powershell
+     git clone https://github.com/<your-username>/UsefulWindowsUtils.git
+     cd UsefulWindowsUtils
+     ```
+   - Non-Git users: open the GitHub repo, click **Code > Download ZIP**, extract it, then open PowerShell in the extracted folder.
+3. Start the app:
+   ```powershell
+   python app.py
+   ```
+4. For system tweaks, debloating, PATH changes, Windows Features, Defender actions, ISO work, or app uninstall operations, run PowerShell **as Administrator** before launching:
+   ```powershell
+   cd path\to\UsefulWindowsUtils
+   python app.py
+   ```
+5. In the App Store tab, use **Install Winget/Choco** if the machine does not already have Winget or Chocolatey ready.
+
+No `pip install` step is required for the core desktop app.
+
+---
+
+## Project Highlights
+
+- **265 bundled app entries** across **21 major categories**.
+- **140 debloater entries** for removable Windows inbox/provisioned apps.
+- **Major app categories:** AI & Design, AI Tools, Browsers, Business & Finance, Business & Productivity, Communications, Creative Tools, Customization, Development, Downloads, Games, IT & DevOps, Malware Analysis, Microsoft Tools, Multimedia Tools, Pro Tools, Productivity, SOC & Detection, Security, Selfhosted Tools, and Utilities.
+- **Security tools:** Defender panel, VirusTotal lookups/uploads, C2 IP/hash intelligence collection, C2 report export, process export, TCP connection review, SHA256 hashing, and folder hash manifests.
+- **System cleanup tools:** Windows debloater, batch app uninstaller, Windows tweaks, Windows Features/fixes, PATH manager, ISO toolset, and mass file mover.
+
+---
+
+The application is intentionally designed to be dependency-light, relying on the Python standard library, Tkinter, native Windows tools, package-manager CLIs, and configured threat-intelligence APIs.
+
+---
 
 ## ⚠️ Important Safety Notice
 
